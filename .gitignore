@@ -1,0 +1,10 @@
+node_modules/
+out/
+dist/
+.npm-cache/
+.test-data/
+test-results/
+playwright-report/
+resources/tools/*
+!resources/tools/.gitkeep
+*.log
