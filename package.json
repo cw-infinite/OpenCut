@@ -1,6 +1,6 @@
 {
   "name": "opencut",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "description": "OpenCut — a private, offline video editor for Windows",
   "author": "OpenCut",
   "private": true,
@@ -46,11 +46,32 @@
   "build": {
     "appId": "app.opencut.desktop",
     "productName": "OpenCut",
-    "directories": { "output": "dist" },
-    "files": ["out/**/*", "package.json"],
-    "asarUnpack": ["node_modules/ffmpeg-static/**/*", "node_modules/ffprobe-static/**/*"],
-    "extraResources": [{ "from": "resources/tools", "to": "tools", "filter": ["**/*", "!**/*.part", "!**/*.zip"] }],
-    "win": { "target": "portable", "signAndEditExecutable": false },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/ffmpeg-static/**/*",
+      "node_modules/ffprobe-static/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/tools",
+        "to": "tools",
+        "filter": [
+          "**/*",
+          "!**/*.part",
+          "!**/*.zip"
+        ]
+      }
+    ],
+    "win": {
+      "target": "portable",
+      "signAndEditExecutable": false
+    },
     "artifactName": "OpenCut-${version}-${arch}.${ext}"
   }
 }

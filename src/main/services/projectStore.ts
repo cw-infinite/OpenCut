@@ -34,6 +34,10 @@ export class ProjectStore {
       throw new Error('Project could not be read. No valid recovery copy was found.');
     }
   }
+  async readStable(id: string): Promise<{ project: Project; recovered: boolean }> {
+    await this.queues.get(id);
+    return this.read(id);
+  }
   private async write(project: Project): Promise<void> {
     const folder = this.folder(project.id);
     await mkdir(folder, { recursive: true });

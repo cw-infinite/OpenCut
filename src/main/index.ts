@@ -7,6 +7,7 @@ import { ProjectStore } from './services/projectStore';
 import { MediaLibrary } from './services/mediaLibrary';
 import { projectHandlers } from './ipc/projects';
 import { serveMedia } from './services/mediaProtocol';
+import { ExportRunner } from './services/exportRunner';
 
 app.setName('OpenCut');
 protocol.registerSchemesAsPrivileged([{ scheme: 'opencut-media', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } }]);
@@ -34,6 +35,7 @@ app.whenReady().then(() => {
   const store = new ProjectStore(app.getPath('userData'));
   const library = new MediaLibrary(store);
   projectHandlers(store, library, trusted);
+  new ExportRunner(store, library, join(__dirname, '../preload/index.js'), join(__dirname, '../renderer/index.html'), trusted);
   protocol.handle('opencut-media', request => serveMedia(request, library.files));
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   const devOrigin = !app.isPackaged && process.env.ELECTRON_RENDERER_URL ? new URL(process.env.ELECTRON_RENDERER_URL).origin : null;

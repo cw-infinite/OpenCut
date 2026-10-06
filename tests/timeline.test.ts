@@ -29,6 +29,13 @@ describe('integer-time timeline', () => {
     const fresh = fixture(); trimClip(fresh, 'clip', 'end', 11e6); expect(() => validateTimeline(fresh)).toThrow('source');
     fresh.tracks[0].locked = true; expect(() => moveClip(fresh, 'clip', 'track', 2e6)).toThrow('locked');
   });
+  it('rejects non-finite and nonnumeric filter values at the IPC validation boundary', () => {
+    const project = fixture(), clip = project.tracks[0].clips[0] as MediaClip;
+    clip.volume.value = '1,amovie=other.wav' as unknown as number;
+    expect(() => validateTimeline(project)).toThrow('volume');
+    clip.volume.value = 1; clip.speed = NaN;
+    expect(() => validateTimeline(project)).toThrow('speed');
+  });
   it('ripple deletion closes the removed interval and snapping uses nearest edges', () => {
     const project = fixture(); splitClip(project, 'clip', 4e6, 'right'); deleteClips(project, ['clip'], true);
     expect(project.tracks[0].clips[0].start).toBe(0); validateTimeline(project);
@@ -46,5 +53,18 @@ describe('integer-time timeline', () => {
     const before = useEditor.getState().project;
     useEditor.getState().edit(project => trimClip(project, 'clip', 'end', 20e6));
     expect(useEditor.getState().project).toBe(before);
+  });
+  it('moves and trims linked audio together, and splits create independent link groups', () => {
+    const project = fixture(), video = project.tracks[0].clips[0];
+    video.linkId = 'linked';
+    const audio = makeTrack('audio', 'audio', 'Audio');
+    audio.clips.push({ ...structuredClone(video), id: 'sound', trackId: 'audio' }); project.tracks.push(audio);
+    moveClip(project, 'clip', 'track', 1e6); trimClip(project, 'clip', 'start', 2e6); validateTimeline(project);
+    expect(audio.clips[0].start).toBe(2e6); expect(audio.clips[0].duration).toBe(9e6);
+    useEditor.getState().load(project); useEditor.getState().select(['clip']); useEditor.getState().seek(5e6); useEditor.getState().split();
+    const result = useEditor.getState().project!;
+    expect(result.tracks.map(track => track.clips.length)).toEqual([2, 2]);
+    expect(result.tracks[0].clips[1].linkId).toBe(result.tracks[1].clips[1].linkId);
+    expect(result.tracks[0].clips[1].linkId).not.toBe('linked');
   });
 });

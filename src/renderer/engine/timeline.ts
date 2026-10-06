@@ -1,4 +1,6 @@
+import { shiftAnimation } from './keyframes';
 import type { Project, Clip, MediaClip, MediaAsset, Track, Animatable } from '../../shared/types';
+import { validateClipValues, validateTrackValues } from './validation';
 export const constant = (value: number): Animatable<number> => ({ value, keyframes: [] });
 export const endOf = (clip: Clip) => clip.start + clip.duration;
 export const durationOf = (project: Project) => Math.max(0, ...project.tracks.flatMap(track => track.clips.map(endOf)));
@@ -12,11 +14,13 @@ export function makeMediaClip(id: string, asset: MediaAsset, trackId: string, st
     transform: { x: constant(.5), y: constant(.5), scale: constant(1), rotation: constant(0) }, opacity: constant(1), effects: [] };
 }
 export function validateTimeline(project: Project): void {
+  validateTrackValues(project);
   const ids = new Set<string>();
   for (const track of project.tracks) {
     if (ids.has(track.id)) throw new Error('Duplicate track ID'); ids.add(track.id);
     let previous: Clip | undefined;
     for (const clip of track.clips) {
+      validateClipValues(clip);
       if (ids.has(clip.id)) throw new Error('Duplicate clip ID'); ids.add(clip.id);
       if (clip.trackId !== track.id || !Number.isSafeInteger(clip.start) || clip.start < 0 || !Number.isSafeInteger(clip.duration) || clip.duration <= 0) throw new Error('Invalid clip timing');
       if (previous && clip.start < endOf(previous) - (clip.transitionIn?.duration ?? 0)) throw new Error('Clips cannot overlap on the same track');
@@ -38,13 +42,15 @@ export function findClip(project: Project, id: string): { clip: Clip; track: Tra
 export function editable(project: Project, id: string) {
   const found = findClip(project, id); if (found.track.locked) throw new Error('Track is locked'); return found;
 }
-export function splitClip(project: Project, id: string, at: number, newId: string): void {
+export function splitClip(project: Project, id: string, at: number, newId: string, newLinkId?: string): void {
   const { clip, track } = editable(project, id);
   const offset = Math.round(at - clip.start);
   if (offset <= 0 || offset >= clip.duration) return;
   const right: Clip = JSON.parse(JSON.stringify(clip));
   right.id = newId; right.start = clip.start + offset; right.duration -= offset;
+  if (right.linkId) right.linkId = newLinkId;
   delete right.transitionIn;
+  shiftAnimation(right, offset);
   if (clip.type === 'media' && right.type === 'media') {
     if (clip.reverse) { right.sourceOut = clip.sourceOut - offset * clip.speed; clip.sourceIn = right.sourceOut; }
     else { right.sourceIn = clip.sourceIn + offset * clip.speed; clip.sourceOut = right.sourceIn; }
@@ -56,8 +62,8 @@ export function moveClip(project: Project, id: string, trackId: string, start: n
   const { clip, track } = editable(project, id), target = project.tracks.find(track => track.id === trackId);
   if (!target || target.locked || target.kind !== track.kind) throw new Error('Choose an unlocked track of the same kind');
   const delta = Math.max(0, Math.round(start)) - clip.start;
-  if (clip.linkId) for (const linkedTrack of project.tracks) for (const partner of linkedTrack.clips) {
-    if (partner.id !== clip.id && partner.linkId === clip.linkId) {
+  if (clip.linkId) for (const linkedTrack of project.tracks) {
+    for (const partner of linkedTrack.clips) if (partner.id !== clip.id && partner.linkId === clip.linkId) {
       if (linkedTrack.locked) throw new Error('Linked track is locked'); partner.start += delta;
     }
     linkedTrack.clips.sort((a, b) => a.start - b.start);
@@ -65,11 +71,18 @@ export function moveClip(project: Project, id: string, trackId: string, start: n
   track.clips = track.clips.filter(item => item.id !== id); clip.trackId = target.id; clip.start = Math.max(0, Math.round(start));
   target.clips.push(clip); target.clips.sort((a, b) => a.start - b.start);
 }
-export function trimClip(project: Project, id: string, edge: 'start' | 'end', time: number): void {
+export function trimClip(project: Project, id: string, edge: 'start' | 'end', time: number, propagate = true): void {
   const { clip, track } = editable(project, id); time = Math.round(time);
+  if (propagate && clip.linkId) {
+    const delta = time - (edge === 'start' ? clip.start : endOf(clip));
+    for (const lane of project.tracks) for (const partner of lane.clips) if (partner.id !== id && partner.linkId === clip.linkId) {
+      trimClip(project, partner.id, edge, (edge === 'start' ? partner.start : endOf(partner)) + delta, false);
+    }
+  }
   if (edge === 'start') {
     const delta = time - clip.start;
     clip.start = time; clip.duration -= delta;
+    shiftAnimation(clip, delta);
     if (clip.type === 'media') { if (clip.reverse) clip.sourceOut -= delta * clip.speed; else clip.sourceIn += delta * clip.speed; }
   } else {
     const delta = time - endOf(clip); clip.duration += delta;

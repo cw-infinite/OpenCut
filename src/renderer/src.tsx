@@ -6,4 +6,6 @@ import '@fontsource/inter/600.css';
 import '@fontsource/inter/700.css';
 import './app/styles.css';
 import { App } from './app/App';
-createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
+import { ExportWorker } from './app/ExportWorker';
+const exporting = new URLSearchParams(location.search).has('export');
+createRoot(document.getElementById('root')!).render(exporting ? <ExportWorker/> : <React.StrictMode><App /></React.StrictMode>);

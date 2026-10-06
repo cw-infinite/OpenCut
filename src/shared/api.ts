@@ -1,4 +1,5 @@
 import type { Project, MediaAsset } from './types';
+import type { ExportRequest, ExportProgress, ExportWork } from './export';
 export interface ProjectSummary { id: string; name: string; updatedAt: string; mediaCount: number; settings: Project['settings'] }
 export interface MediaView { asset: MediaAsset; url: string; thumbnail?: string; peaks: number[] }
 export interface ImportProgress { projectId: string; name: string; stage: string; percent: number; error?: string }
@@ -11,6 +12,16 @@ export interface ToolCheck {
 export interface ToolReport { ready: boolean; tools: ToolCheck[]; checkedAt: string }
 export interface SetupProgress { stage: string; percent: number | null; detail: string }
 export interface OpenCutApi {
+  export: {
+    start(request: ExportRequest): Promise<{ id: string; outputPath: string } | null>;
+    cancel(): Promise<void>;
+    srt(projectId: string): Promise<string | null>;
+    onProgress(callback: (progress: ExportProgress) => void): () => void;
+    work(): Promise<ExportWork>;
+    frame(index: number, bytes: ArrayBuffer): Promise<void>;
+    finish(): Promise<void>;
+    workerError(message: string): Promise<void>;
+  };
   projects: {
     list(): Promise<ProjectSummary[]>;
     create(name: string, settings: Project['settings']): Promise<Project>;

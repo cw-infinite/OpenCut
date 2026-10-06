@@ -17,7 +17,7 @@ export function projectHandlers(store: ProjectStore, library: MediaLibrary, trus
   }));
   handle('projects:create', async (_event, name, settings) => { const project = await store.create(name, settings); await store.remember(project.id); return project; });
   handle('projects:open', async (_event, id) => {
-    const result = await store.read(id);
+    const result = await store.readStable(id);
     await store.remember(id);
     return result;
   });

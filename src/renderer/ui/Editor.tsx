@@ -8,12 +8,14 @@ import { fileName, Waveform } from './MediaBrowser';
 import { Preview } from './Preview';
 import { Timeline } from './Timeline';
 import { Inspector } from './Inspector';
+import { ExportDialog } from './ExportDialog';
 import '../app/editor.css';
 
 export function Editor({ onBack }: { onBack(): void }): JSX.Element {
   const source = useProjects(), state = useEditor();
   const [search, setSearch] = useState(''), [light, setLight] = useState(false);
   const [range, setRange] = useState({ start: 0, end: 0 });
+  const [exportOpen, setExportOpen] = useState(false);
   useEffect(() => { state.load(source.project!); return () => useEditor.setState({ playing: false }); }, []);
   useEffect(() => {
     const save = async () => {
@@ -37,7 +39,7 @@ export function Editor({ onBack }: { onBack(): void }): JSX.Element {
   }, []);
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
-      if ((event.target as HTMLElement).closest('input,textarea,select,[contenteditable=true]')) return;
+      if (document.querySelector('[role="dialog"]') || (event.target as HTMLElement).closest('input,textarea,select,[contenteditable=true]')) return;
       const state = useEditor.getState(), project = state.project; if (!project) return;
       const key = event.key.toLowerCase(), mod = event.ctrlKey || event.metaKey;
       const actions: Record<string, () => void> = mod ? {
@@ -58,9 +60,10 @@ export function Editor({ onBack }: { onBack(): void }): JSX.Element {
   if (!state.project) return <div>Loading timeline…</div>;
   return <div className={'editing-workspace ' + (light ? 'light' : '')}><div className="editor-subbar"><button className="secondary" onClick={async () => {
     useEditor.setState({ playing: false });
-    try { await source.setProject(await window.opencut.projects.saveEdit(useEditor.getState().project!)); onBack(); } catch (error) { useEditor.setState({ error: String(error) }); }
-  }}><ArrowLeft size={14}/> Source browser</button><span>{state.dirty ? 'Saving…' : 'All edits saved'}{range.end > range.start ? ` · Range ${timecode(range.start)} – ${timecode(range.end)}` : ''}</span><button title="Change theme" aria-label="Change theme" onClick={() => setLight(!light)}>{light ? <Moon size={16}/> : <Sun size={16}/>}</button></div>
+    try { await source.setProject(await window.opencut.projects.saveEdit(useEditor.getState().project!)); useEditor.setState({ dirty: false }); onBack(); } catch (error) { useEditor.setState({ error: String(error) }); }
+  }}><ArrowLeft size={14}/> Source browser</button><span>{state.dirty ? 'Saving…' : 'All edits saved'}{range.end > range.start ? ` · Range ${timecode(range.start)} – ${timecode(range.end)}` : ''}</span><div className="editor-export-actions"><button title="Change theme" aria-label="Change theme" onClick={() => setLight(!light)}>{light ? <Moon size={16}/> : <Sun size={16}/>}</button><button className="primary" onClick={() => setExportOpen(true)}>Export</button></div></div>
     {state.error && <div className="error" role="alert">{state.error}<button onClick={() => useEditor.setState({ error: null })}>Dismiss</button></div>}
     <div className="editor-top"><section className="editor-library"><div className="panel-heading"><h2>Media</h2><Film size={15}/></div><div className="search"><Search size={13}/><input placeholder="Search media" aria-label="Search timeline media" value={search} onChange={event => setSearch(event.target.value)}/></div><p className="subtle">Drag to a track or double-click to add.</p><div className="media-grid">{source.views.filter(view => fileName(view.asset.path).toLowerCase().includes(search.toLowerCase())).map(view => <button className="editor-asset media-card" key={view.asset.id} disabled={view.asset.status !== 'ready'} draggable={view.asset.status === 'ready'} onDragStart={event => event.dataTransfer.setData('application/opencut-media', view.asset.id)} onDoubleClick={() => state.addMedia(view.asset.id)}><div className="media-thumb">{view.thumbnail ? <img src={view.thumbnail} alt=""/> : <Waveform peaks={view.peaks}/>}</div><strong>{fileName(view.asset.path)}</strong><small>{view.asset.kind} <Plus size={10}/></small></button>)}</div></section><Preview/><Inspector/></div><Timeline/>
+    {exportOpen && <ExportDialog range={range} onClose={() => setExportOpen(false)}/>}
   </div>;
 }

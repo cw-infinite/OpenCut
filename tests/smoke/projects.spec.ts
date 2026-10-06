@@ -78,12 +78,13 @@ test('create, import VFR video and MP3, seek proxy and restore project on restar
     await expect(page.getByRole('alert')).toHaveCount(0);
     await page.screenshot({ path: 'test-results/timeline.png', fullPage: true });
     await page.getByRole('button', { name: 'Source browser', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Media library' })).toBeVisible();
     const saved = await page.evaluate(async () => {
       const id = await window.opencut.projects.last(); return (await window.opencut.projects.open(id!)).project;
     });
     expect(saved.tracks[0].clips).toHaveLength(4);
   } finally {
-    await app.evaluate(({ BrowserWindow }) => { for (const window of BrowserWindow.getAllWindows()) window.webContents.on('will-prevent-unload', event => event.preventDefault()); });
-    await app.close();
+    await app.evaluate(({ app }) => app.exit(0)).catch(() => {});
+    await app.close().catch(() => {});
   }
 });

@@ -1,3 +1,4 @@
+import { evaluate } from './keyframes';
 import type { Project, Clip, MediaClip } from '../../shared/types';
 export interface RenderResources { source(clip: Clip): CanvasImageSource | undefined }
 export const activeAt = (clip: Clip, time: number) => time >= clip.start && time < clip.start + clip.duration;
@@ -25,15 +26,16 @@ export function renderFrame(ctx: CanvasRenderingContext2D, project: Project, tim
         dw = cropW * scale; dh = cropH * scale;
       }
       ctx.save();
-      ctx.globalAlpha = clip.opacity.value;
+      const localTime = time - clip.start;
+      ctx.globalAlpha = evaluate(clip.opacity, localTime);
       if (clip.blurBackground) {
         const scale = Math.max(width / sw, height / sh) * 1.1;
         ctx.filter = 'blur(24px) brightness(0.5)'; ctx.drawImage(source, (width - sw * scale) / 2, (height - sh * scale) / 2, sw * scale, sh * scale); ctx.filter = 'none';
       }
       const flip = clip.effects.find(effect => effect.type === 'flip' && effect.enabled);
-      ctx.translate(clip.transform.x.value * width, clip.transform.y.value * height);
-      ctx.rotate(clip.transform.rotation.value * Math.PI / 180);
-      ctx.scale(clip.transform.scale.value * (flip?.params.x ? -1 : 1), clip.transform.scale.value * (flip?.params.y ? -1 : 1));
+      ctx.translate(evaluate(clip.transform.x, localTime) * width, evaluate(clip.transform.y, localTime) * height);
+      ctx.rotate(evaluate(clip.transform.rotation, localTime) * Math.PI / 180);
+      ctx.scale(evaluate(clip.transform.scale, localTime) * (flip?.params.x ? -1 : 1), evaluate(clip.transform.scale, localTime) * (flip?.params.y ? -1 : 1));
       ctx.drawImage(source, sw * crop.l, sh * crop.t, cropW, cropH, -dw / 2, -dh / 2, dw, dh);
       ctx.restore();
     }

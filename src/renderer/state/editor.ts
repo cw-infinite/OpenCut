@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { enablePatches, produceWithPatches, applyPatches, type Patch } from 'immer';
 import type { Project, Clip, Track } from '../../shared/types';
-import { deleteClips, durationOf, makeMediaClip, makeTrack, splitClip, validateTimeline } from '../engine/timeline';
+import { deleteClips, durationOf, findClip, makeMediaClip, makeTrack, splitClip, validateTimeline } from '../engine/timeline';
 enablePatches();
 interface History { undo: Patch[]; redo: Patch[] }
 interface EditorState {
@@ -40,16 +40,28 @@ export const useEditor = create<EditorState>((set, get) => ({
       track.clips.push(makeMediaClip(id, media, track.id, time ?? get().playhead)); track.clips.sort((a, b) => a.start - b.start);
     }); get().select([id]);
   },
-  split: () => get().edit(project => { const ids = get().selected.length ? get().selected : project.tracks.flatMap(track => track.locked ? [] : track.clips.map(clip => clip.id)); for (const id of ids) splitClip(project, id, get().playhead, crypto.randomUUID()); }),
+  split: () => get().edit(project => {
+    const selected = get().selected;
+    const links = project.tracks.flatMap(track => track.clips.filter(clip => selected.includes(clip.id) && clip.linkId).map(clip => clip.linkId));
+    const ids = project.tracks.flatMap(track => track.locked && !selected.length ? [] : track.clips.filter(clip => !selected.length || selected.includes(clip.id) || (clip.linkId && links.includes(clip.linkId))).map(clip => clip.id));
+    const splitLinks = new Map<string, string>();
+    for (const id of ids) {
+      const link = findClip(project, id).clip.linkId;
+      if (link && !splitLinks.has(link)) splitLinks.set(link, crypto.randomUUID());
+      splitClip(project, id, get().playhead, crypto.randomUUID(), link ? splitLinks.get(link) : undefined);
+    }
+  }),
   remove: ripple => { get().edit(project => deleteClips(project, get().selected, ripple)); get().select([]); },
   copy: () => { const state = get(); set({ clipboard: JSON.parse(JSON.stringify(state.project?.tracks.flatMap(track => track.clips.filter(clip => state.selected.includes(clip.id))) ?? [])) }); },
   paste: () => {
     const state = get(); if (!state.clipboard.length) return;
     const first = Math.min(...state.clipboard.map(clip => clip.start));
     const ids: string[] = [];
+    const copiedLinks = new Map<string, string>();
     get().edit(project => { for (const original of state.clipboard) {
       const track = project.tracks.find(track => track.id === original.trackId); if (!track || track.locked) throw new Error('Choose an unlocked destination track');
       const clip: Clip = JSON.parse(JSON.stringify(original)); clip.id = crypto.randomUUID(); clip.start = state.playhead + clip.start - first;
+      if (clip.linkId) { if (!copiedLinks.has(clip.linkId)) copiedLinks.set(clip.linkId, crypto.randomUUID()); clip.linkId = copiedLinks.get(clip.linkId); }
       ids.push(clip.id); track.clips.push(clip); track.clips.sort((a, b) => a.start - b.start);
     } }); get().select(ids);
   },

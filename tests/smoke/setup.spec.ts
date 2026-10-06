@@ -2,7 +2,7 @@ import { test, expect, _electron as electron } from '@playwright/test';
 import { resolve } from 'node:path';
 
 test('desktop launch, sandboxed bridge, and real local tool checks', async () => {
-  const app = await electron.launch({ args: ['.'], env: { ...process.env, OPENCUT_TEST_DATA: resolve('.test-data/electron') } });
+  const app = await electron.launch({ executablePath: process.env.OPENCUT_EXECUTABLE, args: process.env.OPENCUT_EXECUTABLE ? [] : ['.'], env: { ...process.env, OPENCUT_TEST_DATA: resolve('.test-data/electron') } });
   try {
     const page = await app.firstWindow();
     const errors: string[] = [];

@@ -1,6 +1,21 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import type { OpenCutApi, SetupProgress, ImportProgress } from '../shared/api';
+import type { ExportProgress } from '../shared/export';
 const api: OpenCutApi = {
+  export: {
+    start: request => ipcRenderer.invoke('export:start', request),
+    cancel: () => ipcRenderer.invoke('export:cancel'),
+    srt: projectId => ipcRenderer.invoke('export:srt', projectId),
+    work: () => ipcRenderer.invoke('export:work'),
+    frame: (index, bytes) => ipcRenderer.invoke('export:frame', index, bytes),
+    finish: () => ipcRenderer.invoke('export:finish'),
+    workerError: message => ipcRenderer.invoke('export:workerError', message),
+    onProgress: callback => {
+      const listener = (_event: Electron.IpcRendererEvent, progress: ExportProgress) => callback(progress);
+      ipcRenderer.on('export:progress', listener);
+      return () => ipcRenderer.removeListener('export:progress', listener);
+    }
+  },
   projects: {
     list: () => ipcRenderer.invoke('projects:list'),
     last: () => ipcRenderer.invoke('projects:last'),
