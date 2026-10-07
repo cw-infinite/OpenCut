@@ -6,12 +6,13 @@ import { evaluate, visualProperty, type VisualProperty } from '../engine/keyfram
 
 export function KeyframeEditor({ clip }: { clip: Clip }): JSX.Element {
   const state = useEditor();
-  const [property, setProperty] = useState<VisualProperty>('x');
-  const animated = visualProperty(clip, property), time = Math.round(state.playhead - clip.start);
-  const update = (fn: (value: typeof animated) => void) => state.edit(project => fn(visualProperty(editable(project, clip.id).clip, property)));
+  const [property, setProperty] = useState<VisualProperty | 'volume'>('x');
+  const getProperty = (item: Clip) => property === 'volume' && item.type === 'media' ? item.volume : visualProperty(item, property as VisualProperty);
+  const animated = getProperty(clip), time = Math.round(state.playhead - clip.start);
+  const update = (fn: (value: typeof animated) => void) => state.edit(project => fn(getProperty(editable(project, clip.id).clip)));
   return <section className="keyframe-editor"><h3>Animation</h3>
-    <label className="inspector-number">Property<select aria-label="Animated property" value={property} onChange={event => setProperty(event.target.value as VisualProperty)}>
-      <option value="x">Position X</option><option value="y">Position Y</option><option value="scale">Scale</option><option value="rotation">Rotation</option><option value="opacity">Opacity</option>
+    <label className="inspector-number">Property<select aria-label="Animated property" value={property} onChange={event => setProperty(event.target.value as VisualProperty | 'volume')}>
+      <option value="x">Position X</option><option value="y">Position Y</option><option value="scale">Scale</option><option value="rotation">Rotation</option><option value="opacity">Opacity</option>{clip.type === 'media' && <option value="volume">Volume</option>}
     </select></label>
     <p className="subtle">At {(time / 1e6).toFixed(3)}s: {evaluate(animated, time).toFixed(3)}. Transform fields edit the value at the playhead when animated.</p>
     <div className="inspector-buttons"><button className="secondary" disabled={time < 0 || time > clip.duration} onClick={() => update(value => {

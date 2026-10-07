@@ -1,4 +1,6 @@
+import { validateText } from './textValidation';
 import type { Animatable, Clip, Project } from '../../shared/types';
+import { transitionTypes } from './transitions';
 function number(value: unknown, min: number, max: number, label: string): asserts value is number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) throw new Error(`Invalid ${label}`);
 }
@@ -23,7 +25,8 @@ export function validateClipValues(clip: Clip): void {
   animated(clip.opacity, 0, 1, 'opacity');
   animated(clip.transform.x, -100, 100, 'position'); animated(clip.transform.y, -100, 100, 'position');
   animated(clip.transform.scale, .001, 100, 'scale'); animated(clip.transform.rotation, -36000, 36000, 'rotation');
-  if (clip.transitionIn && (!Number.isSafeInteger(clip.transitionIn.duration) || clip.transitionIn.duration <= 0 || clip.transitionIn.duration > clip.duration)) throw new Error('Invalid transition duration');
+  if (clip.transitionIn && (!transitionTypes.includes(clip.transitionIn.type) || !Number.isSafeInteger(clip.transitionIn.duration) || clip.transitionIn.duration <= 0 || clip.transitionIn.duration > clip.duration)) throw new Error('Invalid transition duration');
+  if (clip.type === 'text') validateText(clip);
   if (clip.type === 'media') {
     animated(clip.volume, 0, 4, 'volume'); number(clip.speed, .1, 100, 'speed');
     if (![clip.fadeIn, clip.fadeOut].every(time => Number.isSafeInteger(time) && time >= 0)) throw new Error('Invalid audio fade');

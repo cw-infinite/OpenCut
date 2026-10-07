@@ -1,3 +1,5 @@
+import { evaluate } from './keyframes';
+import { fontString } from './text';
 import type { Clip, Project } from '../../shared/types';
 import type { MediaView } from '../../shared/api';
 import { activeAt, sourceTime } from './compositor';
@@ -5,12 +7,18 @@ interface Source { element: HTMLVideoElement | HTMLImageElement; ready: Promise<
 export class MediaResources {
   private pool = new Map<string, Source>();
   private audio: AudioContext | null = null;
+  private fonts = new Map<string, Promise<void>>();
   constructor(private views: MediaView[]) {}
   source(clip: Clip) { return this.pool.get(clip.id)?.element; }
   async prepare(project: Project, time: number, playing = false): Promise<void> {
     const wanted = new Set<string>();
     const jobs: Promise<void>[] = [];
     for (const track of project.tracks) for (const clip of track.clips) {
+      if (clip.type === 'text' && !track.hidden && activeAt(clip, time)) {
+        const font = fontString(clip.style, 1), key = font + clip.content;
+        if (!this.fonts.has(key)) this.fonts.set(key, document.fonts.load(font, clip.content).then(() => {}));
+        jobs.push(this.fonts.get(key)!);
+      }
       if (clip.type !== 'media' || track.hidden || time < clip.start - 1_000_000 || time >= clip.start + clip.duration) continue;
       wanted.add(clip.id);
       const view = this.views.find(view => view.asset.id === clip.mediaId); if (!view) continue;
@@ -31,7 +39,10 @@ export class MediaResources {
         await entry.ready;
         const element = entry.element; if (!(element instanceof HTMLVideoElement)) return;
         const active = activeAt(clip, time), desired = sourceTime(clip, Math.max(clip.start, time)) / 1e6;
-        const gain = clip.muted || track.muted || !active ? 0 : clip.volume.value *
+        const incoming = clip.transitionIn?.duration ?? 0, outgoing = track.clips[track.clips.indexOf(clip) + 1]?.transitionIn?.duration ?? 0;
+        const gain = clip.muted || track.muted || !active ? 0 : evaluate(clip.volume, time - clip.start) *
+          (incoming ? Math.min(1, Math.max(0, (time - clip.start) / incoming)) : 1) *
+          (outgoing ? Math.min(1, Math.max(0, (clip.start + clip.duration - time) / outgoing)) : 1) *
           (clip.fadeIn ? Math.min(1, (time - clip.start) / clip.fadeIn) : 1) *
           (clip.fadeOut ? Math.min(1, (clip.start + clip.duration - time) / clip.fadeOut) : 1);
         if (playing && !this.audio) this.audio = new AudioContext();

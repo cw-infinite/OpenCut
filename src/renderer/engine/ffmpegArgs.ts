@@ -1,3 +1,4 @@
+import { volumeFilter } from './audioAutomation';
 import type { Project, MediaClip } from '../../shared/types';
 import type { Encoder, ExportPlan, ExportRequest, Quality } from '../../shared/export';
 import { durationOf } from './timeline';
@@ -38,7 +39,10 @@ export function audioMixArgs(project: Project, plan: Pick<ExportPlan, 'start' | 
       args.push('-ss', seconds(clip.sourceIn), '-t', seconds(clip.sourceOut - clip.sourceIn), '-i', project.media[clip.mediaId].path);
       const filters = ['aresample=48000', 'aformat=sample_fmts=fltp:channel_layouts=stereo', 'asetpts=PTS-STARTPTS'];
       if (clip.reverse) filters.push('areverse');
-      filters.push(...atempoChain(clip.speed), `volume=${clip.volume.value}`);
+      filters.push(...atempoChain(clip.speed), volumeFilter(clip.volume));
+      const incoming = clip.transitionIn?.duration ?? 0, outgoing = track.clips[track.clips.indexOf(clip) + 1]?.transitionIn?.duration ?? 0;
+      if (incoming) filters.push(`afade=t=in:st=0:d=${seconds(incoming)}`);
+      if (outgoing) filters.push(`afade=t=out:st=${seconds(clip.duration - outgoing)}:d=${seconds(outgoing)}`);
       if (clip.fadeIn) filters.push(`afade=t=in:st=0:d=${seconds(clip.fadeIn)}`);
       if (clip.fadeOut) filters.push(`afade=t=out:st=${seconds(Math.max(0, clip.duration - clip.fadeOut))}:d=${seconds(clip.fadeOut)}`);
       const from = Math.max(0, plan.start - clip.start), to = Math.min(clip.duration, plan.end - clip.start);

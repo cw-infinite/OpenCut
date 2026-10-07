@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import type { OpenCutApi, SetupProgress, ImportProgress } from '../shared/api';
 import type { ExportProgress } from '../shared/export';
 const api: OpenCutApi = {
+  fonts: () => ipcRenderer.invoke('fonts:list'),
   export: {
     start: request => ipcRenderer.invoke('export:start', request),
     cancel: () => ipcRenderer.invoke('export:cancel'),
@@ -28,6 +29,7 @@ const api: OpenCutApi = {
     remove: id => ipcRenderer.invoke('projects:remove', id)
   },
   media: {
+    derive: (id, clipId, operation, time) => ipcRenderer.invoke('media:derive', id, clipId, operation, time),
     pick: id => ipcRenderer.invoke('media:pick', id),
     drop: (id, files) => ipcRenderer.invoke('media:drop', id, files.map(file => webUtils.getPathForFile(file))),
     views: id => ipcRenderer.invoke('media:views', id),

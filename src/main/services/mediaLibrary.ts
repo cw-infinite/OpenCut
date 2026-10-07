@@ -5,6 +5,7 @@ import { probe } from './mediaProbe';
 import { prepareMedia } from './ffmpeg';
 import type { ProjectStore } from './projectStore';
 import type { ImportProgress, MediaView } from '../../shared/api';
+import { deriveMedia } from './derivedMedia';
 
 export class MediaLibrary {
   readonly files = new Map<string, string>();
@@ -44,6 +45,21 @@ export class MediaLibrary {
     } finally { this.busy.delete(projectId); }
   }
   assertIdle(projectId: string): void { if (this.busy.has(projectId)) throw new Error('Wait for media import to finish first'); }
+  async derive(projectId: string, clipId: string, operation: 'freeze' | 'reverse', time: number, progress: (update: ImportProgress) => void) {
+    this.assertIdle(projectId); this.busy.add(projectId);
+    try {
+      if (!['freeze', 'reverse'].includes(operation)) throw new Error('Invalid media operation');
+      const { project } = await this.store.readStable(projectId);
+      const track = project.tracks.find(track => track.clips.some(clip => clip.id === clipId));
+      const clip = track?.clips.find(clip => clip.id === clipId);
+      if (!track || track.locked || clip?.type !== 'media') throw new Error('Select an unlocked media clip');
+      const asset = project.media[clip.mediaId];
+      const derived = await deriveMedia(asset, clip, operation, time, randomUUID(), this.store.folder(projectId), project.settings.fps,
+        (stage, percent) => progress({ projectId, name: operation, stage, percent }));
+      await this.store.update(projectId, current => { current.media[derived.id] = derived; });
+      return derived;
+    } finally { this.busy.delete(projectId); }
+  }
   async views(projectId: string): Promise<MediaView[]> {
     const { project } = await this.store.read(projectId);
     return Promise.all(Object.values(project.media).map(async asset => {

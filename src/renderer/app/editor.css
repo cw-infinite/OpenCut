@@ -88,3 +88,16 @@
 
 .clip-keyframe { position: absolute; bottom: 1px; z-index: 3; transform: translateX(-50%); padding: 0; width: 14px; height: 17px; font-size: 13px; color: #d8f68c; background: #242d2b; border: 0; cursor: ew-resize; }
 .bezier-fields { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 10px; }
+
+.transition-handle { position: absolute; top: 0; left: 0; height: 22px; background: #406a86cc; border: 0; border-right: 3px solid #a7d6fc; color: white; cursor: ew-resize; z-index: 4; }
+
+.text-content { width: 100%; min-height: 85px; resize: vertical; padding: 10px; background: #111316; border: 1px solid #44484f; border-radius: 6px; color: inherit; font: inherit; }
+.text-animation-controls { margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #33363d; }
+.inspector-fields label { font-size: 11px; color: #b5bbc5; }
+.inspector-fields input, .inspector-fields select { width: 100%; min-width: 0; padding: 6px; border-radius: 4px; border: 1px solid #373b43; color: inherit; background: #15171b; }
+
+.canvas-text-editor { position: absolute; z-index: 10; width: min(80%, 550px); padding: 16px; border: 1px solid #befb77; border-radius: 8px; background: #181c21ed; }
+.canvas-text-editor textarea { width: 100%; min-height: 100px; background: #111316; color: white; padding: 12px; font: 22px Inter; }
+.canvas-text-editor > div { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+
+.text-transform .rotate-handle { top: -22px; }

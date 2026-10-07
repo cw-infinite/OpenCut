@@ -28,6 +28,7 @@ test('export a real two-clip MP4 at 720p and 1080p, then cancel without partial 
     await expect(page.locator('.timeline-clip')).toHaveCount(2);
     await page.getByLabel('Preview quality').selectOption('1');
     await expect(page.locator('canvas')).toHaveAttribute('data-render-time', '2000000');
+    await page.screenshot({ path: 'test-results/pre-animation.png', fullPage: true });
     await expect.poll(async () => page.locator('canvas').evaluate(canvas => (canvas as HTMLCanvasElement).getContext('2d')!.getImageData(100, 100, 1, 1).data[0])).toBeGreaterThan(100);
     await page.getByLabel('Animated property').selectOption('scale');
     await page.getByRole('button', { name: 'Add keyframe', exact: true }).click();

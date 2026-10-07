@@ -37,6 +37,14 @@ export function setAnimatedValue(animated: Animatable<number>, time: number, val
   if (existing) existing.value = value;
   else { animated.keyframes.push({ time, value, easing: 'linear' }); animated.keyframes.sort((a, b) => a.time - b.time); }
 }
+export function addClipKeyframe(clip: Clip, time: number): void {
+  time = Math.max(0, Math.min(clip.duration, Math.round(time)));
+  const properties = [...(['x', 'y', 'scale', 'rotation', 'opacity'] as const).map(name => visualProperty(clip, name)), ...(clip.type === 'media' ? [clip.volume] : [])];
+  for (const property of properties) if (!property.keyframes.some(key => key.time === time)) {
+    const value = evaluate(property, time);
+    property.keyframes.push({ time, value, easing: 'linear' }); property.keyframes.sort((a, b) => a.time - b.time);
+  }
+}
 // Keep keys outside the trimmed range to preserve the exact interpolation curve.
 export function shiftAnimation(clip: Clip, delta: number): void {
   const properties = [...Object.values(clip.transform), clip.opacity, ...(clip.type === 'media' ? [clip.volume] : [])];

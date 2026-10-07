@@ -4,10 +4,14 @@ import type { ProjectStore } from '../services/projectStore';
 import type { MediaLibrary } from '../services/mediaLibrary';
 import { mediaExtensions } from '../services/mediaProbe';
 import { validateTimeline } from '../../renderer/engine/timeline';
+import { runProcess } from '../services/process';
 
 export function projectHandlers(store: ProjectStore, library: MediaLibrary, trusted: (event: Electron.IpcMainInvokeEvent) => void): void {
   const handle = (channel: string, fn: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown) =>
     ipcMain.handle(channel, (event, ...args) => { trusted(event); return fn(event, ...args); });
+  let fonts: Promise<string[]> | undefined;
+  handle('fonts:list', () => fonts ??= runProcess('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Add-Type -AssemblyName System.Drawing; (New-Object System.Drawing.Text.InstalledFontCollection).Families.Name | ConvertTo-Json -Compress'], 15000)
+    .then(raw => { const values: unknown = JSON.parse(raw); return Array.isArray(values) ? values.filter((value): value is string => typeof value === 'string') : []; }).catch(() => ['Arial', 'Segoe UI', 'Times New Roman']));
   handle('projects:list', () => store.list());
   handle('projects:last', () => store.last());
   handle('projects:saveEdit', (_event, input) => store.update(input.id, project => {
@@ -40,6 +44,7 @@ export function projectHandlers(store: ProjectStore, library: MediaLibrary, trus
   });
   handle('media:drop', (event, id, paths) => library.import(id, paths, progress => { if (!event.sender.isDestroyed()) event.sender.send('media:progress', progress); }));
   handle('media:views', (_event, id) => library.views(id));
+  handle('media:derive', (event, id, clipId, operation, time) => library.derive(id, clipId, operation, time, progress => { if (!event.sender.isDestroyed()) event.sender.send('media:progress', progress); }));
   handle('media:remove', (_event, id, assetId) => {
     library.assertIdle(id);
     return store.update(id, project => {

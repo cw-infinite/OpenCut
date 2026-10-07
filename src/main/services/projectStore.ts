@@ -77,11 +77,11 @@ export class ProjectStore {
       project.name = project.name.slice(0, 110) + ' copy';
       const folder = this.folder(project.id);
       await mkdir(folder, { recursive: true });
-      for (const name of ['proxies', 'peaks', 'thumbs', 'captions']) {
+      for (const name of ['proxies', 'peaks', 'thumbs', 'captions', 'derived']) {
         await cp(join(oldFolder, name), join(folder, name), { recursive: true }).catch(error => { if (error.code !== 'ENOENT') throw error; });
       }
       for (const asset of Object.values(project.media)) {
-        for (const key of ['proxyPath', 'peaksPath', 'thumbDir'] as const) {
+        for (const key of ['path', 'proxyPath', 'peaksPath', 'thumbDir'] as const) {
           if (asset[key]?.startsWith(oldFolder)) asset[key] = folder + asset[key]!.slice(oldFolder.length);
         }
       }

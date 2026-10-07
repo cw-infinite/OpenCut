@@ -13,15 +13,16 @@ export function TransformHandles({ canvas }: { canvas: RefObject<HTMLCanvasEleme
     const update = () => { const rect = element.getBoundingClientRect(), parent = element.parentElement!.getBoundingClientRect(); setBounds({ x: rect.x - parent.x, y: rect.y - parent.y, width: rect.width, height: rect.height }); };
     const observer = new ResizeObserver(update); observer.observe(element); update(); return () => observer.disconnect();
   }, [canvas]);
-  if (!clip || clip.type !== 'media' || !activeAt(clip, state.playhead)) return null;
-  const asset = project.media[clip.mediaId];
+  if (!clip || !activeAt(clip, state.playhead)) return null;
+  const asset = clip.type === 'media' ? project.media[clip.mediaId] : { kind: 'text', width: project.settings.width * clip.style.maxWidthFraction, height: clip.style.fontSize * clip.style.lineHeight * clip.content.split('\n').length, rotation: 0 };
   if (asset.kind === 'audio') return null;
   const rotated = Math.abs(asset.rotation ?? 0) % 180 === 90;
   const width = (rotated ? asset.height : asset.width) ?? project.settings.width;
   const height = (rotated ? asset.width : asset.height) ?? project.settings.height;
-  const ratio = width * (1 - clip.crop.l - clip.crop.r) / (height * (1 - clip.crop.t - clip.crop.b));
+  const ratio = clip.type === 'media' ? width * (1 - clip.crop.l - clip.crop.r) / (height * (1 - clip.crop.t - clip.crop.b)) : width / height;
   let w = bounds.width, h = bounds.height;
-  if (clip.fit !== 'stretch') { const fitWidth = bounds.width / ratio <= bounds.height; if (fitWidth === (clip.fit === 'fit')) h = w / ratio; else w = h * ratio; }
+  if (clip.type === 'text') { w = width / project.settings.width * bounds.width; h = height / project.settings.height * bounds.height; }
+  else if (clip.fit !== 'stretch') { const fitWidth = bounds.width / ratio <= bounds.height; if (fitWidth === (clip.fit === 'fit')) h = w / ratio; else w = h * ratio; }
   const time = state.playhead - clip.start;
   const gesture = (event: React.PointerEvent, property: 'scale' | 'rotation') => {
     event.preventDefault(); event.stopPropagation();
@@ -32,7 +33,7 @@ export function TransformHandles({ canvas }: { canvas: RefObject<HTMLCanvasEleme
     };
     window.addEventListener('pointerup', finish, { once: true });
   };
-  return <div className="transform-box" style={{ left: bounds.x + evaluate(clip.transform.x, time) * bounds.width, top: bounds.y + evaluate(clip.transform.y, time) * bounds.height,
+  return <div className={'transform-box ' + (clip.type === 'text' ? 'text-transform' : '')} style={{ left: bounds.x + evaluate(clip.transform.x, time) * bounds.width, top: bounds.y + evaluate(clip.transform.y, time) * bounds.height,
     width: w * evaluate(clip.transform.scale, time), height: h * evaluate(clip.transform.scale, time), transform: `translate(-50%,-50%) rotate(${evaluate(clip.transform.rotation, time)}deg)` }}>
     <button className="scale-handle" title="Drag to scale" aria-label="Scale selected clip" onPointerDown={event => gesture(event, 'scale')}/>
     <button className="rotate-handle" title="Drag to rotate" aria-label="Rotate selected clip" onPointerDown={event => gesture(event, 'rotation')}/>

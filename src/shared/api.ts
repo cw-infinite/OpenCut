@@ -12,6 +12,7 @@ export interface ToolCheck {
 export interface ToolReport { ready: boolean; tools: ToolCheck[]; checkedAt: string }
 export interface SetupProgress { stage: string; percent: number | null; detail: string }
 export interface OpenCutApi {
+  fonts(): Promise<string[]>;
   export: {
     start(request: ExportRequest): Promise<{ id: string; outputPath: string } | null>;
     cancel(): Promise<void>;
@@ -34,6 +35,7 @@ export interface OpenCutApi {
     saveEdit(project: Project): Promise<Project>;
   };
   media: {
+    derive(projectId: string, clipId: string, operation: 'freeze' | 'reverse', time: number): Promise<MediaAsset>;
     pick(projectId: string): Promise<Project>;
     drop(projectId: string, files: File[]): Promise<Project>;
     views(projectId: string): Promise<MediaView[]>;

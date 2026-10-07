@@ -1,3 +1,4 @@
+import { quantizeOffset } from './speed';
 import { shiftAnimation } from './keyframes';
 import type { Project, Clip, MediaClip, MediaAsset, Track, Animatable } from '../../shared/types';
 import { validateClipValues, validateTrackValues } from './validation';
@@ -24,6 +25,7 @@ export function validateTimeline(project: Project): void {
       if (ids.has(clip.id)) throw new Error('Duplicate clip ID'); ids.add(clip.id);
       if (clip.trackId !== track.id || !Number.isSafeInteger(clip.start) || clip.start < 0 || !Number.isSafeInteger(clip.duration) || clip.duration <= 0) throw new Error('Invalid clip timing');
       if (previous && clip.start < endOf(previous) - (clip.transitionIn?.duration ?? 0)) throw new Error('Clips cannot overlap on the same track');
+      if (clip.transitionIn && (!previous || clip.start !== endOf(previous) - clip.transitionIn.duration || clip.transitionIn.duration + (previous.transitionIn?.duration ?? 0) > previous.duration)) throw new Error('Transition requires an exact overlap without a third clip');
       if (clip.type === 'text' && track.kind !== 'text') throw new Error('Use a text track');
       if (clip.type === 'media') {
         const asset = project.media[clip.mediaId];
@@ -44,7 +46,7 @@ export function editable(project: Project, id: string) {
 }
 export function splitClip(project: Project, id: string, at: number, newId: string, newLinkId?: string): void {
   const { clip, track } = editable(project, id);
-  const offset = Math.round(at - clip.start);
+  const offset = quantizeOffset(clip, at - clip.start);
   if (offset <= 0 || offset >= clip.duration) return;
   const right: Clip = JSON.parse(JSON.stringify(clip));
   right.id = newId; right.start = clip.start + offset; right.duration -= offset;
@@ -52,8 +54,8 @@ export function splitClip(project: Project, id: string, at: number, newId: strin
   delete right.transitionIn;
   shiftAnimation(right, offset);
   if (clip.type === 'media' && right.type === 'media') {
-    if (clip.reverse) { right.sourceOut = clip.sourceOut - offset * clip.speed; clip.sourceIn = right.sourceOut; }
-    else { right.sourceIn = clip.sourceIn + offset * clip.speed; clip.sourceOut = right.sourceIn; }
+    if (clip.reverse) { right.sourceOut = clip.sourceOut - Math.round(offset * clip.speed); clip.sourceIn = right.sourceOut; }
+    else { right.sourceIn = clip.sourceIn + Math.round(offset * clip.speed); clip.sourceOut = right.sourceIn; }
   }
   clip.duration = offset;
   track.clips.push(right); track.clips.sort((a, b) => a.start - b.start);
@@ -72,7 +74,9 @@ export function moveClip(project: Project, id: string, trackId: string, start: n
   target.clips.push(clip); target.clips.sort((a, b) => a.start - b.start);
 }
 export function trimClip(project: Project, id: string, edge: 'start' | 'end', time: number, propagate = true): void {
-  const { clip, track } = editable(project, id); time = Math.round(time);
+  const { clip, track } = editable(project, id);
+  const origin = edge === 'start' ? clip.start : endOf(clip);
+  time = origin + quantizeOffset(clip, time - origin);
   if (propagate && clip.linkId) {
     const delta = time - (edge === 'start' ? clip.start : endOf(clip));
     for (const lane of project.tracks) for (const partner of lane.clips) if (partner.id !== id && partner.linkId === clip.linkId) {
@@ -83,10 +87,10 @@ export function trimClip(project: Project, id: string, edge: 'start' | 'end', ti
     const delta = time - clip.start;
     clip.start = time; clip.duration -= delta;
     shiftAnimation(clip, delta);
-    if (clip.type === 'media') { if (clip.reverse) clip.sourceOut -= delta * clip.speed; else clip.sourceIn += delta * clip.speed; }
+    if (clip.type === 'media') { if (clip.reverse) clip.sourceOut -= Math.round(delta * clip.speed); else clip.sourceIn += Math.round(delta * clip.speed); }
   } else {
     const delta = time - endOf(clip); clip.duration += delta;
-    if (clip.type === 'media') { if (clip.reverse) clip.sourceIn -= delta * clip.speed; else clip.sourceOut += delta * clip.speed; }
+    if (clip.type === 'media') { if (clip.reverse) clip.sourceIn -= Math.round(delta * clip.speed); else clip.sourceOut += Math.round(delta * clip.speed); }
   }
   track.clips.sort((a, b) => a.start - b.start);
 }

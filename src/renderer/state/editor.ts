@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { enablePatches, produceWithPatches, applyPatches, type Patch } from 'immer';
 import type { Project, Clip, Track } from '../../shared/types';
 import { deleteClips, durationOf, findClip, makeMediaClip, makeTrack, splitClip, validateTimeline } from '../engine/timeline';
+import { makeTextClip } from '../engine/text';
 enablePatches();
 interface History { undo: Patch[]; redo: Patch[] }
 interface EditorState {
@@ -11,6 +12,7 @@ interface EditorState {
   edit(recipe: (project: Project) => void): void;
   undo(): void; redo(): void; select(ids: string[]): void; seek(time: number): void; play(): void;
   addTrack(kind: Track['kind']): void; addMedia(mediaId: string, trackId?: string, time?: number): void;
+  addText(): void;
   split(): void; remove(ripple?: boolean): void; copy(): void; paste(): void; duplicate(): void;
 }
 export const useEditor = create<EditorState>((set, get) => ({
@@ -29,6 +31,10 @@ export const useEditor = create<EditorState>((set, get) => ({
   seek: time => set({ playhead: Math.max(0, Math.round(time)) }),
   play: () => set(state => ({ playing: !state.playing, playhead: state.project && state.playhead >= durationOf(state.project) ? 0 : state.playhead })),
   addTrack: kind => get().edit(project => { project.tracks.push(makeTrack(crypto.randomUUID(), kind, `${kind[0].toUpperCase() + kind.slice(1)} ${project.tracks.filter(track => track.kind === kind).length + 1}`)); }),
+  addText: () => {
+    const id = crypto.randomUUID();
+    get().edit(project => { const track = makeTrack(crypto.randomUUID(), 'text', 'Text'); track.clips.push(makeTextClip(id, track.id, get().playhead)); project.tracks.push(track); }); get().select([id]);
+  },
   addMedia: (mediaId, trackId, time) => {
     const id = crypto.randomUUID();
     get().edit(project => {

@@ -24,4 +24,9 @@
 - Visual keyframe easing belongs to the outgoing key. Curves clamp to their first/last value outside the keyed interval. Trimming/splitting retains keys outside the visible clip range (including negative clip-relative times) so nonlinear curves remain exact rather than being approximated.
 - Custom Bézier controls are constrained to the unit square to avoid transform/opacity overshoot.
 
+- Speed supports 0.1–100 in 0.01 increments. A rational timing grid preserves integer microseconds and the exact source-span invariant; fractional speeds may trim less than 10 ms from the source end. Later clips on the track ripple. Preview media playback above 16× may seek/chop; exported speed remains exact.
+- Transition edits require adjacent clips and prevent triple overlap. They ripple the affected track; unlink detached clips before changing overlap. Audio crossfades linearly across transitions.
+- Reverse creates local derived media, processing at most two seconds of video per FFmpeg reverse operation. Freeze captures a frame-aligned PNG and adds a five-second still on a new track. Derived originals are copied when duplicating projects.
+- Ordinary audio keyframe easing uses exact FFmpeg expressions; custom Bézier gain uses 64 piecewise-linear segments and FFmpeg audio-frame evaluation.
+
 References: [electron-vite requirements](https://electron-vite.org/guide/), [official Whisper releases](https://github.com/ggml-org/whisper.cpp/releases), [official model repository](https://huggingface.co/ggerganov/whisper.cpp).
