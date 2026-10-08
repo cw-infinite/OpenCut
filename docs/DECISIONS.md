@@ -29,4 +29,9 @@
 - Reverse creates local derived media, processing at most two seconds of video per FFmpeg reverse operation. Freeze captures a frame-aligned PNG and adds a five-second still on a new track. Derived originals are copied when duplicating projects.
 - Ordinary audio keyframe easing uses exact FFmpeg expressions; custom Bézier gain uses 64 piecewise-linear segments and FFmpeg audio-frame evaluation.
 
+- Text uses the shared canvas compositor for preview and export. Active fonts are loaded before layout. Whole-title styles are cached as transparent layers; per-character/word/line animations render individual glyphs.
+- M5 verification compares real decoded 1080p frames at entrance, middle, and exit for both automatic (NVENC on this machine) and software encoding. Saved text content, animations, and custom styles are checked after reopening the timeline. The prior title-export timeout did not reproduce on resumption; the existing cached renderer completed the 60-frame export in about two seconds with NVENC.
+
 References: [electron-vite requirements](https://electron-vite.org/guide/), [official Whisper releases](https://github.com/ggml-org/whisper.cpp/releases), [official model repository](https://huggingface.co/ggerganov/whisper.cpp).
+
+- 0.5.1 normalizes waveform caches at the media IPC boundary. Both plain arrays and the older `{ buckets, peaks }` format return finite, bounded sample arrays. Corrupt or missing disposable waveform data returns an empty waveform without rewriting projects or source media. Regression testing reproduced the original `peaks.slice is not a function` crash and verifies Projects restore/navigation after the fix.

@@ -7,5 +7,10 @@
 | M2: timeline and preview | Automated acceptance passed | 18 tests; Electron drag three clips, split/delete/undo/redo, canvas pixels, playback and persistence checks. Linked edits and transform handles implemented. Full hardware/media corpus remains unverified. |
 | M3: MP4 export | Automated acceptance passed; portable build verified | Real 720p software and 1080p NVENC exports; MP4 H.264/yuv420p + AAC; duration/A-V stream lengths within one frame; decoded animated frame at 2.5 seconds matches preview within tolerance; cancel removes partial output. VLC is not installed, so VLC/manual playback remains unverified. |
 | M4: animation and motion | Automated acceptance passed | Keyframes/easing/custom Bézier, speed, 12 transitions, reverse and freeze. 34 unit/integration tests; four Electron tests. Actual 0.5×/2× MP4 duration and 440 Hz pitch checks; dissolve frame matches preview; reverse frame order across chunk boundaries and freeze/undo verified. |
-| M5–M9 | Not started | Awaiting the prior milestone gates |
+| M5: text and animation | Automated acceptance passed; portable 0.5 build produced | Typecheck, 37 unit/integration tests, and all six Electron regression tests pass; title editing, char typewriter, stroke/shadow/background, saved-style restore; real 1080p NVENC and libx264 exports match preview at entrance, middle, and exit. Screenshot reviewed. The packaged app also passes launch/tool checks and the software title-export test. |
+| M6–M9 | Not started | Next: advanced audio (M6) |
 | M10 | Optional, deferred | Only after M0–M9 are solid |
+
+## 0.5.1 Projects crash fix
+
+Opening Projects could restore an audio project whose waveform cache used `{ buckets, peaks }` and crash with `peaks.slice is not a function`. The cache reader now supports that format and plain arrays, and tolerates damaged caches. Typecheck and all 39 unit/integration tests pass. Both Projects navigation regressions and the startup check pass in the packaged app. An isolated copy of the affected existing project also opens and returns to Projects without renderer errors; original project files were not changed.

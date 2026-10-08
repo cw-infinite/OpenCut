@@ -2,7 +2,9 @@
 
 A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
 
-**Current build: 0.4 — project import, multi-track editing, keyframes, speed, transitions, reverse/freeze, canvas preview and MP4 export.** Animated text, captions and advanced audio/effects are still in development. See [milestone status](docs/STATUS.md).
+**Current build: 0.5.1 — project import, multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles, canvas preview and MP4 export.** Captions and advanced audio/effects are still in development. See [milestone status](docs/STATUS.md).
+
+0.5.1 fixes a black screen when Projects restores media with an older waveform cache. Both array and `{ buckets, peaks }` caches are supported; missing or damaged waveform caches no longer prevent opening a project.
 
 ## Run on Windows x64
 
@@ -45,6 +47,16 @@ Portable Windows output goes to `dist/`. No signing, updater, account or telemet
 7. Click **Export**. Choose 480p/720p/1080p, FPS, quality, AAC bitrate, and automatic or software encoding. **I/O** set optional export-range endpoints on the timeline.
 8. Click **Export MP4** and choose a path. **Keep editing** closes the dialog while export continues; a task indicator remains visible. Cancel removes incomplete output.
 
-Checks include generated VFR import, frame seeking, restart restore, timeline operations, 200-step history capacity, real MP4 exports and a decoded-frame comparison. Real-camera footage, long edits, manual player compatibility and performance targets still need broader validation.
+## Verify M5: animated titles
+
+Run `npm run dev`, then **Open projects → New project → Create project → Open timeline → Add text**.
+
+1. Edit **Text content**, or double-click the preview and choose **Apply text**. Choose a font and style preset in the inspector.
+2. Enable **stroke**, **shadow**, and **background** under Appearance; adjust their colors and dimensions.
+3. Under **Text animations**, choose **pop** for In, **slideDown** for Out, and **pulse** for Loop. Seek and play to inspect the entrance and exit.
+4. Try **typewriter** with **char** granularity and adjust Stagger. The shared **Animation** section adds transform and opacity keyframes.
+5. Name your style and click **Save style** to reuse it. Click **Export → Export MP4** for a local video.
+
+Checks include generated VFR import, frame seeking, restart restore, timeline operations, 200-step history capacity, and real MP4 exports. Animated title frames at 0.2, 0.8, and 1.8 seconds match preview within lossy-encoding tolerance with automatic GPU selection and software encoding. Real-camera footage, long edits, manual player compatibility and performance targets still need broader validation.
 
 The full product roadmap remains the supplied build spec, implemented in milestone order. Decisions and deviations are recorded in `docs/DECISIONS.md` and `docs/SKIPPED.md`.

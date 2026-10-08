@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { parseWaveformCache } from './waveformCache';
 import { stat, readFile, readdir } from 'node:fs/promises';
 import { basename, isAbsolute, join } from 'node:path';
 import { probe } from './mediaProbe';
@@ -65,7 +66,7 @@ export class MediaLibrary {
     return Promise.all(Object.values(project.media).map(async asset => {
       const files = asset.thumbDir ? await readdir(asset.thumbDir).catch(() => []) : [];
       const first = files.sort()[0];
-      const peaks = asset.peaksPath ? JSON.parse(await readFile(asset.peaksPath, 'utf8').catch(() => '[]')) as number[] : [];
+      const peaks = asset.peaksPath ? parseWaveformCache(await readFile(asset.peaksPath, 'utf8').catch(() => '[]')) : [];
       return { asset, url: this.url(asset.proxyPath ?? asset.path), peaks,
         thumbnail: first && asset.thumbDir ? this.url(join(asset.thumbDir, first)) : undefined };
     }));
