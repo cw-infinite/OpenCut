@@ -74,5 +74,5 @@ export const useEditor = create<EditorState>((set, get) => ({
       ids.push(clip.id); track.clips.push(clip); track.clips.sort((a, b) => a.start - b.start);
     } }); get().select(ids);
   },
-  duplicate: () => { let ids: string[] = []; const before = get().project; get().edit(project => { ids = duplicateSelection(project, get().selected, () => crypto.randomUUID()); }); if (before !== get().project) get().select(ids); }
+  duplicate: () => { let ids: string[] = []; const before = get().project; get().edit(project => { ids = duplicateSelection(project, get().selected, () => crypto.randomUUID()); }); if (before !== get().project) { get().select(ids); get().seek(Math.min(...get().project!.tracks.flatMap(track => track.clips.filter(clip => ids.includes(clip.id)).map(clip => clip.start)))); } }
 }));

@@ -14,6 +14,12 @@
 | M9: export and project polish | Automated acceptance passed | Typecheck, 57 unit/integration tests and all 16 desktop tests pass. Sequential 1080p/720p/480p export, TikTok 1080×1920/30, estimates, PNG/JPEG frames and duplicate-safe covers, batch cancel cleanup, silence removal/undo, missing-media relink, markers/groups, synthetic webcam and isolated test-window recording verified. Physical devices/system audio need manual acceptance. |
 | M10 | Optional, deferred | Only after M0–M9 are solid |
 
+## 0.9.1 editing improvements
+
+Larger interface labels (14 px minimum), pointer-based live group dragging with one undo entry, marquee selection across tracks in all four directions, Shift-click individual toggles, bulk inspector actions, and whole-group duplication are implemented. Preview follows the canvas aspect ratio, has 25–300% display zoom/Fit and a resizable upper workspace, and fullscreen works with both the exit button and Escape.
+
+Typecheck, 59 unit/integration tests and all 18 desktop tests pass, including bulk media volume/mute persistence, bulk text sizing, undo, and the existing export/effects regressions. Three further checks pass in the packaged app: startup/tools and both editing workflows, including zoom/fullscreen. Release output: `dist/0.9.1/`.
+
 ## 0.9.0 release verification
 
 The packaged Windows app passes four additional desktop checks: startup and bundled tools, batch/platform/frame/cover exports with cancellation, silence removal and relink, and synthetic webcam plus isolated test-window recording. Build output is `dist/0.9.0/`; the portable executable is `OpenCut-0.9.0-x64.exe`. Physical devices, system audio, optional small.en inference and long-project/manual media acceptance remain outstanding as listed in `SKIPPED.md`.

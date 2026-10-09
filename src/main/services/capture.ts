@@ -14,6 +14,7 @@ export function captureHandlers(editor: () => BrowserWindow | null, trusted: (ev
     selection = mode === 'screen' ? { id: source, audio, until: videoUntil } : null;
   });
   session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => {
+    if (permission === 'fullscreen') { callback(contents === editor()?.webContents && details.isMainFrame); return; }
     if (permission === 'display-capture') { callback(contents === editor()?.webContents && Boolean(selection && Date.now() < selection.until)); return; }
     const types = 'mediaTypes' in details ? details.mediaTypes : [];
     // Electron reports an empty mediaTypes list for getDisplayMedia before source selection.

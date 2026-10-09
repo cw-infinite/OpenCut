@@ -13,7 +13,7 @@ export function TransformHandles({ canvas }: { canvas: RefObject<HTMLCanvasEleme
     const update = () => { const rect = element.getBoundingClientRect(), parent = element.parentElement!.getBoundingClientRect(); setBounds({ x: rect.x - parent.x, y: rect.y - parent.y, width: rect.width, height: rect.height }); };
     const observer = new ResizeObserver(update); observer.observe(element); update(); return () => observer.disconnect();
   }, [canvas]);
-  if (!clip || !activeAt(clip, state.playhead)) return null;
+  if (!clip || state.selected.length !== 1 || !activeAt(clip, state.playhead)) return null;
   const asset = clip.type === 'media' ? project.media[clip.mediaId] : { kind: 'text', width: project.settings.width * clip.style.maxWidthFraction, height: clip.style.fontSize * clip.style.lineHeight * clip.content.split('\n').length, rotation: 0 };
   if (asset.kind === 'audio') return null;
   const rotated = Math.abs(asset.rotation ?? 0) % 180 === 90;

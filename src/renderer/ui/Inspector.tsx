@@ -1,4 +1,5 @@
 import { AudioControls } from './AudioControls';
+import { BulkInspector } from './BulkInspector';
 import { SilenceRemoval } from './SilenceRemoval';
 import { VisualControls } from './VisualControls';
 import { DerivedActions } from './DerivedActions';
@@ -16,6 +17,8 @@ export function Inspector(): JSX.Element {
   const clip = project.tracks.flatMap(track => track.clips).find(clip => clip.id === state.selected[0]);
   const edit = (fn: (clip: MediaClip) => void) => { if (clip?.type === 'media') state.edit(project => fn(editable(project, clip.id).clip as MediaClip)); };
   const time = Math.max(0, Math.min(clip?.duration ?? 0, state.playhead - (clip?.start ?? 0)));
+  const selection = project.tracks.flatMap(track => track.clips).filter(clip => state.selected.includes(clip.id));
+  if (selection.length > 1) return <BulkInspector clips={selection}/>;
   if (clip?.type === 'text') return <aside className="inspector"><TextInspector clip={clip}/></aside>;
   const number = (label: string, value: number, onChange: (value: number) => void, min: number, max: number, step = .01) => <label className="inspector-number">{label}<input aria-label={label} type="number" value={value} min={min} max={max} step={step} onChange={event => { const value = Number(event.target.value); if (Number.isFinite(value) && value >= min && value <= max) onChange(value); }}/></label>;
   return <aside className="inspector"><div className="panel-heading"><h2>Inspector</h2><span>{state.selected.length ? `${state.selected.length} selected` : 'Nothing selected'}</span></div>{!clip || clip.type !== 'media' ? <p className="subtle">Select a clip to adjust its appearance and sound.</p> : <><h3>Transform</h3><div className="inspector-fields">{number('Position X', evaluate(clip.transform.x, time), value => edit(clip => { setAnimatedValue(clip.transform.x, time, value); }), -2, 3)}{number('Position Y', evaluate(clip.transform.y, time), value => edit(clip => { setAnimatedValue(clip.transform.y, time, value); }), -2, 3)}{number('Scale', evaluate(clip.transform.scale, time), value => edit(clip => { setAnimatedValue(clip.transform.scale, time, value); }), .01, 10)}{number('Rotation', evaluate(clip.transform.rotation, time), value => edit(clip => { setAnimatedValue(clip.transform.rotation, time, value); }), -360, 360, 1)}{number('Opacity', evaluate(clip.opacity, time), value => edit(clip => { setAnimatedValue(clip.opacity, time, value); }), 0, 1)}</div>

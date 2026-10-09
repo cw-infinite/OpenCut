@@ -2,7 +2,15 @@
 
 A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
 
-**Current build: 0.9.0 — milestones M0–M9 implemented, with broader manual acceptance still pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+**Current build: 0.9.1 — milestones M0–M9 plus readability and editing improvements, with broader manual acceptance still pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+
+## Easier editing in 0.9.1
+
+Interface labels now use at least 14 px text. Drag from empty timeline space in any direction to select every clip touched by the rectangle, including clips on other tracks. Shift-click toggles individual clips. Drag any selected clip to move the selection with live preview and edge scrolling; release to commit one undoable edit, or press Escape to cancel. Invalid overlaps and locked/incompatible tracks are rejected.
+
+The bulk inspector offers delete/deselect, volume and mute for media selections, and font size for text selections. Delete affects the selected clips; Ctrl+D duplicates the whole selection after its original span, preserving offsets and moving later clips on affected tracks to make room.
+
+The preview visibly follows the project's canvas shape. Use **Preview zoom** (25–300%) and **Fit preview**; scroll to inspect a zoomed canvas, or resize the upper workspace vertically. Fullscreen now works and includes playback controls, with a button or Escape to exit. Preview zoom does not alter exported framing.
 
 0.5.1 fixes a black screen when Projects restores media with an older waveform cache. Both array and `{ buckets, peaks }` caches are supported; missing or damaged waveform caches no longer prevent opening a project.
 
