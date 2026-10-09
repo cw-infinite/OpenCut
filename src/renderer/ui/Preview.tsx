@@ -1,4 +1,5 @@
 import { CanvasTextEditor } from './CanvasTextEditor';
+import { FrameExport } from './FrameExport';
 import { evaluate, setAnimatedValue } from '../engine/keyframes';
 import { useEffect, useRef, useState } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Maximize, Repeat2, Scan } from 'lucide-react';
@@ -44,7 +45,7 @@ export function Preview(): JSX.Element {
     return () => { canceled = true; cancelAnimationFrame(frame); pool.pause(); };
   }, [project, state.playing, state.playing ? null : state.playhead, quality, views, loop]);
   const step = (delta: number) => { useEditor.setState({ playing: false }); state.seek(frameTime(toFrame(state.playhead, project.settings.fps) + delta, project.settings.fps)); };
-  return <section className="preview-panel"><div className="panel-heading"><h2>Preview</h2><span>{project.settings.width} × {project.settings.height} · {project.settings.fps} fps</span></div><div ref={container} className="canvas-wrap" onDoubleClick={() => { const clip = project.tracks.flatMap(track => track.clips).find(clip => clip.id === state.selected[0]); if (clip?.type === 'text') { useEditor.setState({ playing: false }); setEditingText(clip.id); } }} onPointerDown={event => {
+  return <section className="preview-panel"><div className="panel-heading"><h2>Preview</h2><FrameExport/><span>{project.settings.width} × {project.settings.height} · {project.settings.fps} fps</span></div><div ref={container} className="canvas-wrap" onDoubleClick={() => { const clip = project.tracks.flatMap(track => track.clips).find(clip => clip.id === state.selected[0]); if (clip?.type === 'text') { useEditor.setState({ playing: false }); setEditingText(clip.id); } }} onPointerDown={event => {
     const id = state.selected[0]; if (!id) return;
     const rect = canvas.current!.getBoundingClientRect();
     const up = (end: PointerEvent) => { state.edit(project => { const { clip } = editable(project, id); const time = Math.max(0, Math.min(clip.duration, state.playhead - clip.start)); setAnimatedValue(clip.transform.x, time, evaluate(clip.transform.x, time) + (end.clientX - event.clientX) / rect.width); setAnimatedValue(clip.transform.y, time, evaluate(clip.transform.y, time) + (end.clientY - event.clientY) / rect.height); }); window.removeEventListener('pointerup', up); };

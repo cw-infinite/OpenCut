@@ -3,6 +3,7 @@ import type { OpenCutApi, SetupProgress, ImportProgress } from '../shared/api';
 import type { ExportProgress } from '../shared/export';
 import type { CaptionProgress } from '../shared/captions';
 const api: OpenCutApi = {
+  capture: { sources: () => ipcRenderer.invoke('capture:sources'), authorize: (mode, source, audio) => ipcRenderer.invoke('capture:authorize', mode, source, audio) },
   captions: {
     models: () => ipcRenderer.invoke('captions:models'),
     generate: request => ipcRenderer.invoke('captions:generate', request),
@@ -16,6 +17,8 @@ const api: OpenCutApi = {
   },
   fonts: () => ipcRenderer.invoke('fonts:list'),
   export: {
+    image: (projectId, format, bytes) => ipcRenderer.invoke('export:image', projectId, format, bytes),
+    batch: requests => ipcRenderer.invoke('export:batch', requests),
     start: request => ipcRenderer.invoke('export:start', request),
     cancel: () => ipcRenderer.invoke('export:cancel'),
     srt: projectId => ipcRenderer.invoke('export:srt', projectId),
@@ -41,6 +44,9 @@ const api: OpenCutApi = {
     remove: id => ipcRenderer.invoke('projects:remove', id)
   },
   media: {
+    recordVideo: (projectId, bytes) => ipcRenderer.invoke('media:recordVideo', projectId, bytes),
+    silence: (projectId, clipId, threshold, minimum) => ipcRenderer.invoke('media:silence', projectId, clipId, threshold, minimum),
+    relink: (projectId, assetId) => ipcRenderer.invoke('media:relink', projectId, assetId),
     record: (projectId, bytes) => ipcRenderer.invoke('media:record', projectId, bytes),
     beats: (projectId, clipId) => ipcRenderer.invoke('media:beats', projectId, clipId),
     derive: (id, clipId, operation, time) => ipcRenderer.invoke('media:derive', id, clipId, operation, time),

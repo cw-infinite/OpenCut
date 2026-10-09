@@ -1,8 +1,8 @@
 import type { Project, MediaAsset } from './types';
 import type { ExportRequest, ExportProgress, ExportWork } from './export';
 import type { CaptionRequest, CaptionWord, CaptionProgress } from './captions';
-export interface ProjectSummary { id: string; name: string; updatedAt: string; mediaCount: number; settings: Project['settings'] }
-export interface MediaView { asset: MediaAsset; url: string; thumbnail?: string; peaks: number[] }
+export interface ProjectSummary { id: string; name: string; updatedAt: string; mediaCount: number; settings: Project['settings']; cover?: string }
+export interface MediaView { asset: MediaAsset; url: string; thumbnail?: string; peaks: number[]; missing?: boolean }
 export interface ImportProgress { projectId: string; name: string; stage: string; percent: number; error?: string }
 export interface ToolCheck {
   id: 'ffmpeg' | 'ffprobe' | 'whisper' | 'model';
@@ -13,6 +13,10 @@ export interface ToolCheck {
 export interface ToolReport { ready: boolean; tools: ToolCheck[]; checkedAt: string }
 export interface SetupProgress { stage: string; percent: number | null; detail: string }
 export interface OpenCutApi {
+  capture: {
+    sources(): Promise<{ id: string; name: string; thumbnail: string }[]>;
+    authorize(mode: 'camera' | 'screen', source: string, audio: boolean): Promise<void>;
+  };
   captions: {
     models(): Promise<Record<'base.en' | 'small.en', boolean>>;
     generate(request: CaptionRequest): Promise<CaptionWord[]>;
@@ -22,6 +26,8 @@ export interface OpenCutApi {
   };
   fonts(): Promise<string[]>;
   export: {
+    image(projectId: string, format: 'png' | 'jpg' | 'cover', bytes: ArrayBuffer): Promise<string | null>;
+    batch(requests: ExportRequest[]): Promise<{ id: string; outputPath: string } | null>;
     start(request: ExportRequest): Promise<{ id: string; outputPath: string } | null>;
     cancel(): Promise<void>;
     srt(projectId: string): Promise<string | null>;
@@ -43,6 +49,9 @@ export interface OpenCutApi {
     saveEdit(project: Project): Promise<Project>;
   };
   media: {
+    recordVideo(projectId: string, bytes: ArrayBuffer): Promise<MediaAsset>;
+    silence(projectId: string, clipId: string, threshold: number, minimum: number): Promise<{ start: number; end: number }[]>;
+    relink(projectId: string, assetId: string): Promise<Project>;
     record(projectId: string, bytes: ArrayBuffer): Promise<MediaAsset>;
     beats(projectId: string, clipId: string): Promise<number[]>;
     derive(projectId: string, clipId: string, operation: 'freeze' | 'reverse', time: number): Promise<MediaAsset>;

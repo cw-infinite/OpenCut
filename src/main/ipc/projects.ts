@@ -1,4 +1,4 @@
-import { dialog, ipcMain } from 'electron';
+import { app, dialog, ipcMain } from 'electron';
 import { createProject, validSettings } from '../../shared/project';
 import type { ProjectStore } from '../services/projectStore';
 import type { MediaLibrary } from '../services/mediaLibrary';
@@ -6,6 +6,7 @@ import { mediaExtensions } from '../services/mediaProbe';
 import { validateTimeline } from '../../renderer/engine/timeline';
 import { analyzeBeats } from '../services/beats';
 import { runProcess } from '../services/process';
+import { analyzeSilence } from '../services/silence';
 
 export function projectHandlers(store: ProjectStore, library: MediaLibrary, trusted: (event: Electron.IpcMainInvokeEvent) => void): void {
   const handle = (channel: string, fn: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown) =>
@@ -13,7 +14,7 @@ export function projectHandlers(store: ProjectStore, library: MediaLibrary, trus
   let fonts: Promise<string[]> | undefined;
   handle('fonts:list', () => fonts ??= runProcess('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Add-Type -AssemblyName System.Drawing; (New-Object System.Drawing.Text.InstalledFontCollection).Families.Name | ConvertTo-Json -Compress'], 15000)
     .then(raw => { const values: unknown = JSON.parse(raw); return Array.isArray(values) ? values.filter((value): value is string => typeof value === 'string') : []; }).catch(() => ['Arial', 'Segoe UI', 'Times New Roman']));
-  handle('projects:list', () => store.list());
+  handle('projects:list', async () => Promise.all((await store.list()).map(async project => ({ ...project, cover: await library.cover(project.id) }))));
   handle('projects:last', () => store.last());
   handle('projects:saveEdit', (_event, input) => store.update(input.id, project => {
     if (!Array.isArray(input.tracks) || !Array.isArray(input.markers)) throw new Error('Invalid timeline data');
@@ -45,8 +46,23 @@ export function projectHandlers(store: ProjectStore, library: MediaLibrary, trus
   });
   handle('media:drop', (event, id, paths) => library.import(id, paths, progress => { if (!event.sender.isDestroyed()) event.sender.send('media:progress', progress); }));
   handle('media:views', (_event, id) => library.views(id));
+  handle('media:relink', async (event, id, assetId) => {
+    const { project } = await store.readStable(id);
+    if (!project.media[assetId]) throw new Error('Unknown media asset');
+    const selected = await dialog.showOpenDialog({ title: 'Locate replacement media', properties: ['openFile'], filters: [{ name: 'Video, audio and images', extensions: mediaExtensions }] });
+    if (selected.canceled || !selected.filePaths[0]) return project;
+    return library.relink(id, assetId, selected.filePaths[0], progress => { if (!event.sender.isDestroyed()) event.sender.send('media:progress', progress); });
+  });
   handle('media:record', (_event, id, bytes) => library.record(id, bytes));
+  handle('media:recordVideo', (_event, id, bytes) => library.recordVideo(id, bytes));
   handle('media:beats', (_event, id, clipId) => analyzeBeats(store, id, clipId));
+  let analyzingSilence = false;
+  const silenceAbort = new AbortController(); app.once('before-quit', () => silenceAbort.abort());
+  handle('media:silence', async (_event, id, clipId, threshold, minimum) => {
+    if (analyzingSilence) throw new Error('Silence analysis is already running');
+    analyzingSilence = true;
+    try { return await analyzeSilence(store, id, clipId, threshold, minimum, silenceAbort.signal); } finally { analyzingSilence = false; }
+  });
   handle('media:derive', (event, id, clipId, operation, time) => library.derive(id, clipId, operation, time, progress => { if (!event.sender.isDestroyed()) event.sender.send('media:progress', progress); }));
   handle('media:remove', (_event, id, assetId) => {
     library.assertIdle(id);

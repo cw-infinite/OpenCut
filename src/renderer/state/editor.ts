@@ -3,9 +3,11 @@ import { enablePatches, produceWithPatches, applyPatches, type Patch } from 'imm
 import type { Project, Clip, Track } from '../../shared/types';
 import { deleteClips, durationOf, findClip, makeMediaClip, makeTrack, splitClip, validateTimeline } from '../engine/timeline';
 import { makeTextClip } from '../engine/text';
+import { duplicateSelection } from '../engine/selection';
 enablePatches();
 interface History { undo: Patch[]; redo: Patch[] }
 interface EditorState {
+  dragPreview: Project | null;
   project: Project | null; selected: string[]; playhead: number; playing: boolean; zoom: number; snap: boolean;
   history: History[]; future: History[]; clipboard: Clip[]; error: string | null; dirty: boolean;
   load(project: Project): void;
@@ -16,8 +18,9 @@ interface EditorState {
   split(): void; remove(ripple?: boolean): void; copy(): void; paste(): void; duplicate(): void;
 }
 export const useEditor = create<EditorState>((set, get) => ({
+  dragPreview: null,
   project: null, selected: [], playhead: 0, playing: false, zoom: 80, snap: true, history: [], future: [], clipboard: [], error: null, dirty: false,
-  load: project => set({ project, selected: [], playhead: 0, playing: false, history: [], future: [], dirty: false }),
+  load: project => set({ project, dragPreview: null, selected: [], playhead: 0, playing: false, history: [], future: [], dirty: false }),
   edit: recipe => {
     const { project, history } = get(); if (!project) return;
     try {
@@ -57,7 +60,7 @@ export const useEditor = create<EditorState>((set, get) => ({
       splitClip(project, id, get().playhead, crypto.randomUUID(), link ? splitLinks.get(link) : undefined);
     }
   }),
-  remove: ripple => { get().edit(project => deleteClips(project, get().selected, ripple)); get().select([]); },
+  remove: ripple => { const before = get().project; get().edit(project => deleteClips(project, get().selected, ripple, false)); if (before !== get().project) get().select([]); },
   copy: () => { const state = get(); set({ clipboard: JSON.parse(JSON.stringify(state.project?.tracks.flatMap(track => track.clips.filter(clip => state.selected.includes(clip.id))) ?? [])) }); },
   paste: () => {
     const state = get(); if (!state.clipboard.length) return;
@@ -71,5 +74,5 @@ export const useEditor = create<EditorState>((set, get) => ({
       ids.push(clip.id); track.clips.push(clip); track.clips.sort((a, b) => a.start - b.start);
     } }); get().select(ids);
   },
-  duplicate: () => { get().copy(); const clips = get().clipboard; if (clips.length) { get().seek(Math.max(...clips.map(clip => clip.start + clip.duration))); get().paste(); } }
+  duplicate: () => { let ids: string[] = []; const before = get().project; get().edit(project => { ids = duplicateSelection(project, get().selected, () => crypto.randomUUID()); }); if (before !== get().project) get().select(ids); }
 }));

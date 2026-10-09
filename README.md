@@ -2,7 +2,7 @@
 
 A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
 
-**Current build: 0.6.1 — project import, multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles, canvas preview and MP4 export.** Advanced audio includes master/solo, fades, ducking, beat markers, voiceover and WAV/MP3/AAC export. Offline English captions now generate from the timeline, an in/out range, or a selected clip, with editable lists and SRT import/export. Animated caption presets and visual effects remain in development. See [milestone status](docs/STATUS.md).
+**Current build: 0.9.0 — milestones M0–M9 implemented, with broader manual acceptance still pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
 
 0.5.1 fixes a black screen when Projects restores media with an older waveform cache. Both array and `{ buckets, peaks }` caches are supported; missing or damaged waveform caches no longer prevent opening a project.
 
@@ -61,10 +61,20 @@ Checks include generated VFR import, frame seeking, restart restore, timeline op
 
 The full product roadmap remains the supplied build spec, implemented in milestone order. Decisions and deviations are recorded in `docs/DECISIONS.md` and `docs/SKIPPED.md`.
 
-## Audio and captions (0.6.1)
+## Audio and captions
 
 Select an audio/video clip to adjust master gain, solo, fades and ducking in the inspector. Noise reduction and loudness normalization apply during export. **Detect beat markers** adds onset candidates. **Record voiceover** captures your microphone at the playhead; stop recording to add it as an audio clip. Export supports WAV, MP3 and AAC in addition to MP4.
 
-Click **Captions** to generate offline English captions from the audible timeline, an I/O range, or the selected clip. Adjust character/word limits and choose a static style and position. The list supports text edits, timing changes, merge/split, delete, find/replace, and restyle all. SRT import/export is available in the same dialog. Captions are ordinary text clips and burn into MP4 output. Generate adds a new track; existing captions stay available for comparison or undo.
+Click **Captions** to generate offline English captions from the audible timeline, an I/O range, or the selected clip. Adjust character/word/line limits and choose a style and position, including karaoke, word-pop and box-highlight presets. The list supports text edits, timing changes, merge/split, delete, find/replace, and restyle all. SRT import/export is available in the same dialog. Captions are ordinary text clips and burn into MP4 output. Generate adds a new track; existing captions stay available for comparison or undo.
 
-M7 is still in progress: karaoke/word-pop/box-highlight presets, adjustable maximum lines, larger-model selection in the UI, and filler-word removal are not available yet. Imported and manually edited caption text has no word timings.
+Model controls offer base.en and the optional checksum-verified small.en download. Filler-word candidates use generated word timings and can be reviewed and cut with undo. Imported and manually edited caption text has no word timings. Actual small.en inference and arbitrary human-speech timing remain unverified.
+
+## Effects and export polish
+
+Select a media clip for filters, color adjustments, blur, RGB split, shake, zoom pulse, VHS, mirror, pixelation, grain, blend modes, masks, chroma key, and picture-in-picture frames. Preview and export share the same renderer.
+
+In **Export**, choose a platform preset or output shape. Enable **Batch export resolutions** to produce 1080p, 720p and 480p sequentially in one folder. A batch uses one project snapshot; cancel retains completed files. Estimated sizes are approximate. **Save frame** above the preview exports a full-resolution PNG/JPEG or sets the project cover.
+
+The source browser flags missing originals and offers **Relink selected media**. The inspector's **Remove silence** analyzes an audio/video clip, shows candidate intervals, and removes them across all tracks with one undo. **Markers**, **Group**, and **Ungroup** are in the timeline toolbar.
+
+**Record video** offers webcam or a selected screen/window with optional microphone/system audio. Stop to add the recording at the playhead. Video recordings are limited to five minutes/120 MB; physical devices and system-audio capture still need manual testing.

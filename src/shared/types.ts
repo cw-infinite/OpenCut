@@ -30,6 +30,7 @@ export interface Track {
 export type Clip = MediaClip | TextClip;
 
 export interface ClipBase {
+  blendMode?: 'normal' | 'multiply' | 'screen' | 'overlay' | 'add';
   linkId?: string;
   id: string; trackId: string;
   start: Us; duration: Us;          // placement on the timeline
@@ -40,6 +41,9 @@ export interface ClipBase {
 }
 
 export interface MediaClip extends ClipBase {
+  mask?: { shape: 'rectangle' | 'ellipse' | 'linear'; x: number; y: number; width: number; height: number; rotation: number; feather: number; invert: boolean };
+  chromaKey?: { color: string; similarity: number; smoothness: number; spill: number };
+  frame?: { radius: number; borderWidth: number; borderColor: string; shadow: number };
   audioEffects?: { noiseReduction?: boolean; normalize?: boolean };
   type: 'media'; mediaId: string;
   sourceIn: Us; sourceOut: Us;      // trim window in source time

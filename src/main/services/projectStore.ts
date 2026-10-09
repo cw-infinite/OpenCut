@@ -77,6 +77,7 @@ export class ProjectStore {
       project.name = project.name.slice(0, 110) + ' copy';
       const folder = this.folder(project.id);
       await mkdir(folder, { recursive: true });
+      await copyFile(join(oldFolder, 'cover.png'), join(folder, 'cover.png')).catch(error => { if (error.code !== 'ENOENT') throw error; });
       for (const name of ['proxies', 'peaks', 'thumbs', 'captions', 'derived']) {
         await cp(join(oldFolder, name), join(folder, name), { recursive: true }).catch(error => { if (error.code !== 'ENOENT') throw error; });
       }
@@ -87,6 +88,13 @@ export class ProjectStore {
       }
       await this.write(project);
       return project;
+    });
+  }
+  async setCover(id: string, bytes: Buffer): Promise<void> {
+    await this.enqueue(id, async () => {
+      await this.read(id);
+      const path = join(this.folder(id), 'cover.png');
+      await writeFile(path + '.tmp', bytes, { flush: true }); await rename(path + '.tmp', path);
     });
   }
   async remove(id: string): Promise<void> { await this.enqueue(id, () => rm(this.folder(id), { recursive: true, force: true })); }

@@ -22,6 +22,13 @@ test('real offline speech captions, edit/merge/split, SRT interchange and persis
     await page.getByRole('button', { name: 'Open timeline', exact: true }).click();
     await page.locator('.editor-asset').dblclick(); await page.locator('.timeline-clip').click();
     await page.getByRole('button', { name: 'Captions', exact: true }).click();
+    const models = await page.evaluate(() => window.opencut.captions.models());
+    if (!models['small.en']) {
+      await page.getByLabel('Speech model').selectOption('small.en');
+      await expect(page.getByRole('button', { name: 'Download speech model', exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Generate captions', exact: true })).toBeDisabled();
+      await page.getByLabel('Speech model').selectOption('base.en');
+    }
     await page.getByLabel('Speech source').selectOption('clip');
     await page.getByRole('button', { name: 'Generate captions', exact: true }).click();
     await expect(page.getByRole('status')).toContainText('Added', { timeout: 60000 });

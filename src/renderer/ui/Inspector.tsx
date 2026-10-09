@@ -1,4 +1,6 @@
 import { AudioControls } from './AudioControls';
+import { SilenceRemoval } from './SilenceRemoval';
+import { VisualControls } from './VisualControls';
 import { DerivedActions } from './DerivedActions';
 import { TextInspector } from './TextInspector';
 import { TransitionEditor } from './TransitionEditor';
@@ -21,7 +23,7 @@ export function Inspector(): JSX.Element {
       <label className="check-row"><input type="checkbox" checked={clip.blurBackground} onChange={event => edit(clip => { clip.blurBackground = event.target.checked; })}/> Blurred background</label>
       <div className="inspector-fields">{(['l', 't', 'r', 'b'] as const).map(side => number(`Crop ${side}`, clip.crop[side], value => edit(clip => { clip.crop[side] = value; }), 0, .49))}</div>
       <div className="inspector-buttons">{(['x', 'y'] as const).map(axis => <button key={axis} className="secondary" onClick={() => edit(clip => { let flip = clip.effects.find(effect => effect.type === 'flip'); if (!flip) { flip = { type: 'flip', params: { x: 0, y: 0 }, enabled: true }; clip.effects.push(flip); } flip.params[axis] = flip.params[axis] ? 0 : 1; })}>Flip {axis.toUpperCase()}</button>)}</div>
-      <h3>Speed</h3>{project.media[clip.mediaId].kind !== 'image' && number('Playback speed', clip.speed, value => state.edit(project => changeSpeed(project, clip.id, value)), .1, 100, .01)}<p className="subtle">Speed changes ripple later clips on this track and linked audio. Export preserves audio pitch.</p><DerivedActions clip={clip}/><TransitionEditor clip={clip}/><KeyframeEditor clip={clip}/><AudioControls clip={clip}/><h3>Audio</h3>{number('Volume', evaluate(clip.volume, time), value => edit(clip => { setAnimatedValue(clip.volume, time, value); }), 0, 4)}<label className="check-row"><input type="checkbox" checked={clip.muted} onChange={event => edit(clip => { clip.muted = event.target.checked; })}/> Mute clip</label>
+      <VisualControls clip={clip}/><h3>Speed</h3>{project.media[clip.mediaId].kind !== 'image' && number('Playback speed', clip.speed, value => state.edit(project => changeSpeed(project, clip.id, value)), .1, 100, .01)}<p className="subtle">Speed changes ripple later clips on this track and linked audio. Export preserves audio pitch.</p><DerivedActions clip={clip}/><TransitionEditor clip={clip}/><KeyframeEditor clip={clip}/><AudioControls clip={clip}/>{project.media[clip.mediaId].hasAudio && <SilenceRemoval key={clip.id} clip={clip}/>}<h3>Audio</h3>{number('Volume', evaluate(clip.volume, time), value => edit(clip => { setAnimatedValue(clip.volume, time, value); }), 0, 4)}<label className="check-row"><input type="checkbox" checked={clip.muted} onChange={event => edit(clip => { clip.muted = event.target.checked; })}/> Mute clip</label>
       <button className="secondary" disabled={!project.media[clip.mediaId].hasAudio} onClick={() => state.edit(project => {
         const original = editable(project, clip.id).clip as MediaClip;
         const track = makeTrack(crypto.randomUUID(), 'audio', 'Detached audio');

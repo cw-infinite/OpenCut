@@ -9,6 +9,7 @@ import { projectHandlers } from './ipc/projects';
 import { serveMedia } from './services/mediaProtocol';
 import { ExportRunner } from './services/exportRunner';
 import { CaptionRunner } from './services/captionRunner';
+import { captureHandlers } from './services/capture';
 
 app.setName('OpenCut');
 protocol.registerSchemesAsPrivileged([{ scheme: 'opencut-media', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } }]);
@@ -39,9 +40,7 @@ app.whenReady().then(() => {
   new CaptionRunner(store, toolsRoot(), trusted);
   new ExportRunner(store, library, join(__dirname, '../preload/index.js'), join(__dirname, '../renderer/index.html'), trusted);
   protocol.handle('opencut-media', request => serveMedia(request, library.files));
-  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => callback(
-    contents === window?.webContents && permission === 'media' && 'mediaTypes' in details && details.mediaTypes?.length === 1 && details.mediaTypes[0] === 'audio'
-  ));
+  captureHandlers(() => window, trusted);
   const devOrigin = !app.isPackaged && process.env.ELECTRON_RENDERER_URL ? new URL(process.env.ELECTRON_RENDERER_URL).origin : null;
   const rendererURL = pathToFileURL(join(__dirname, '../renderer/index.html')).href;
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {

@@ -5,18 +5,30 @@ export function whisperWords(input: unknown, offset = 0, duration = Infinity): C
   const segments = (input as { transcription?: unknown[] })?.transcription;
   if (!Array.isArray(segments)) throw new Error('Whisper returned no transcript');
   const words: CaptionWord[] = [];
+  const centers: ({ first: number; last: number } | undefined)[] = [];
   for (const item of segments) {
-    const segment = item as { text?: string; offsets?: { from: number; to: number } };
+    const segment = item as { text?: string; offsets?: { from: number; to: number }; tokens?: { text: string; t_dtw?: number }[] };
     const tokens = segment.text?.trim().split(/\s+/).filter(Boolean) ?? [];
     const from = segment.offsets?.from, to = segment.offsets?.to;
     if (!tokens.length || !Number.isFinite(from) || !Number.isFinite(to) || to! <= from!) continue;
     for (let i = 0; i < tokens.length; i++) {
       const start = Math.max(0, Math.round((from! + (to! - from!) * i / tokens.length) * 1000));
       const end = Math.min(duration, Math.round((from! + (to! - from!) * (i + 1) / tokens.length) * 1000));
-      if (end > start) words.push({ text: tokens[i], start: start + offset, end: end + offset });
+      if (end > start) {
+        words.push({ text: tokens[i], start: start + offset, end: end + offset });
+        const aligned = tokens.length === 1 ? segment.tokens?.filter(token => !token.text.startsWith('[_') && /[\p{L}\p{N}]/u.test(token.text) && Number.isSafeInteger(token.t_dtw) && token.t_dtw! >= 0) : undefined;
+        centers.push(aligned?.length ? { first: aligned[0].t_dtw! * 10000 + offset, last: aligned.at(-1)!.t_dtw! * 10000 + offset } : undefined);
+      }
     }
   }
-  return words.sort((a, b) => a.start - b.start);
+  for (let i = 0; i < words.length; i++) {
+    const center = centers[i], previous = centers[i - 1], next = centers[i + 1];
+    if (!center) continue;
+    const from = previous && previous.last <= center.first ? Math.round((previous.last + center.first) / 2) : words[i].start;
+    const to = next && next.first >= center.last ? Math.round((center.last + next.first) / 2) : words[i].end;
+    if (to > from) { words[i].start = Math.max(offset, from); words[i].end = Math.min(offset + duration, to); }
+  }
+  return words.filter(word => word.end > word.start).sort((a, b) => a.start - b.start);
 }
 function wrap(words: CaptionWord[], width: number): string {
   const lines = [''];

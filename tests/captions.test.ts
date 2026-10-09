@@ -6,12 +6,23 @@ import { createProject } from '../src/shared/project';
 import { makeTrack, validateTimeline } from '../src/renderer/engine/timeline';
 import { captionWordState, styleCaption } from '../src/renderer/engine/captionStyle';
 import { mergeCaption, splitCaption } from '../src/renderer/engine/captionEdits';
+import { refineSpeechTiming, silenceCollector } from '../src/renderer/engine/speechTiming';
 
 describe('caption timing and interchange', () => {
   it('reads millisecond Whisper offsets, drops empty segments, and applies the edit offset', () => {
     expect(whisperWords({ transcription: [{ text: '', offsets: { from: 0, to: 100 } }, { text: ' Hello world.', offsets: { from: 100, to: 1100 } }] }, 2e6, 800000)).toEqual([
       { text: 'Hello', start: 2100000, end: 2600000 }, { text: 'world.', start: 2600000, end: 2800000 }
     ]);
+  });
+  it('uses DTW centers without punctuation and tightens only quiet-gap boundaries', () => {
+    const words = whisperWords({ transcription: [
+      { text: ' Hello.', offsets: { from: 0, to: 1800 }, tokens: [{ text: ' Hello', t_dtw: 40 }, { text: '.', t_dtw: 150 }] },
+      { text: ' Again', offsets: { from: 1800, to: 2500 }, tokens: [{ text: ' Again', t_dtw: 220 }] }
+    ] });
+    expect(words[0].end).toBe(1300000); expect(words[1].start).toBe(1300000);
+    const collector = silenceCollector(); collector.push('silence_sta'); collector.push('rt: 0.8\nsilence_end: 2.0 | silence_duration: 1.2\n');
+    expect(collector.gaps).toEqual([{ start: 800000, end: 2e6 }]);
+    expect(refineSpeechTiming(words, collector.gaps)).toEqual([{ text: 'Hello.', start: 0, end: 800000 }, { text: 'Again', start: 2e6, end: 2500000 }]);
   });
   it('chunks at punctuation/word limits and fills only short gaps without overlap', () => {
     const words = ['Welcome', 'to', 'OpenCut.', 'Make', 'a', 'story', 'today.'].map((text, i) => ({ text, start: i * 300000, end: i * 300000 + 250000 }));

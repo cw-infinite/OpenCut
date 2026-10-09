@@ -11,7 +11,7 @@ export function Setup({ onContinue }: { onContinue?: () => void }): JSX.Element 
       <div className="workspace-label">YOUR WORKSPACE</div>
       <div className="nav-item selected"><Clapperboard size={18}/> Getting started</div>
       <button className="nav-item" disabled={!report?.ready} onClick={onContinue}><Folder size={18}/> Projects</button>
-      <div className="sidebar-bottom"><span className="local-dot"/> Your files stay yours.<p>No accounts. No cloud. Just create.</p><div className="version">OpenCut 0.6.1 · Windows desktop</div></div>
+      <div className="sidebar-bottom"><span className="local-dot"/> Your files stay yours.<p>No accounts. No cloud. Just create.</p><div className="version">OpenCut 0.9.0 · Windows desktop</div></div>
     </aside>
     <main className="main">
       <header className="topbar"><span>Workspace <ChevronRight size={14}/> Getting started</span><span className="privacy"><LockKeyhole size={13}/> Local by design</span></header>

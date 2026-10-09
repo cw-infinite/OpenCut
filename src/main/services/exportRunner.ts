@@ -11,8 +11,13 @@ import { exportSrt } from '../../renderer/engine/captions';
 import { validateTimeline } from '../../renderer/engine/timeline';
 import { selectEncoder } from './encoders';
 import { ffmpegPath } from './tools';
+import type { Project } from '../../shared/types';
+import type { MediaView } from '../../shared/api';
+
+interface Batch { id: string; owner: WebContents; project: Project; views: MediaView[]; requests: ExportRequest[]; folder: string; index: number; outputs: string[]; canceled: boolean; last?: ExportProgress }
 
 interface Job {
+  batch?: Batch; done?: Promise<ExportProgress['stage']>;
   work: ExportWork; owner: WebContents; output: string; partial: string; folder: string;
   canceled: boolean; failure?: string; child?: ChildProcessWithoutNullStreams; window?: BrowserWindow;
   frame: number; writing: boolean; started: number; lastReport: number; encoder?: Encoder;
@@ -20,10 +25,24 @@ interface Job {
 export class ExportRunner {
   private job: Job | null = null;
   private starting = false;
+  private batch: Batch | null = null;
   constructor(private store: ProjectStore, private media: MediaLibrary, private preload: string, private renderer: string,
     trusted: (event: IpcMainInvokeEvent) => void) {
     ipcMain.handle('export:start', (event, request: ExportRequest) => { trusted(event); return this.start(event.sender, request); });
+    ipcMain.handle('export:batch', (event, requests: ExportRequest[]) => { trusted(event); return this.startBatch(event.sender, requests); });
     ipcMain.handle('export:cancel', event => { trusted(event); this.cancel(); });
+    ipcMain.handle('export:image', async (event, id: string, format: 'png' | 'jpg' | 'cover', bytes: ArrayBuffer) => {
+      trusted(event);
+      if (!['png', 'jpg', 'cover'].includes(format) || !(bytes instanceof ArrayBuffer) || bytes.byteLength < 8 || bytes.byteLength > 32 * 1024 * 1024) throw new Error('Invalid frame image');
+      const data = Buffer.from(bytes);
+      if (format !== 'jpg' ? data.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a' : data.subarray(0, 3).toString('hex') !== 'ffd8ff') throw new Error('Invalid image signature');
+      const { project } = await this.store.readStable(id);
+      if (format === 'cover') { await this.store.setCover(id, data); return 'Project cover saved'; }
+      const selected = await dialog.showSaveDialog({ title: 'Save current frame', defaultPath: `${project.name.replace(/[<>:"/\\|?*]/g, '_')}-frame.${format}`, filters: [{ name: format.toUpperCase(), extensions: [format] }] });
+      if (selected.canceled || !selected.filePath) return null;
+      const output = selected.filePath.toLowerCase().endsWith('.' + format) ? selected.filePath : selected.filePath + '.' + format;
+      await writeFile(output, data); return output;
+    });
     ipcMain.handle('export:srt', async (event, id: string) => {
       trusted(event); const { project } = await this.store.read(id), text = exportSrt(project);
       if (!text) throw new Error('This project has no caption clips yet.');
@@ -49,34 +68,68 @@ export class ExportRunner {
     return job;
   }
   private report(job: Job, stage: ExportProgress['stage'], message?: string): void {
+    if (stage === 'complete' && job.batch && job.batch.index < job.batch.requests.length) stage = 'queued';
     const elapsed = (Date.now() - job.started) / 1000, fps = elapsed > 0 ? job.frame / elapsed : 0;
     const progress: ExportProgress = { id: job.work.id, stage, frame: job.frame, total: job.work.plan.totalFrames, fps,
-      etaSeconds: fps ? Math.max(0, (job.work.plan.totalFrames - job.frame) / fps) : null, outputPath: job.output, encoder: job.encoder, message };
+      etaSeconds: fps ? Math.max(0, (job.work.plan.totalFrames - job.frame) / fps) : null, outputPath: job.output, encoder: job.encoder, message,
+      batch: job.batch ? { index: job.batch.index, total: job.batch.requests.length, outputs: [...job.batch.outputs] } : undefined };
+    if (job.batch) job.batch.last = progress;
     if (!job.owner.isDestroyed()) job.owner.send('export:progress', progress);
     job.lastReport = Date.now();
   }
   async start(owner: WebContents, request: ExportRequest): Promise<{ id: string; outputPath: string } | null> {
-    if (this.starting || this.job) throw new Error('An export is already running');
+    if (this.starting || this.job || this.batch) throw new Error('An export is already running');
     this.starting = true;
     try { return await this.begin(owner, request); } finally { this.starting = false; }
   }
-  private async begin(owner: WebContents, request: ExportRequest): Promise<{ id: string; outputPath: string } | null> {
+  private async startBatch(owner: WebContents, requests: ExportRequest[]) {
+    if (this.starting || this.job || this.batch) throw new Error('An export is already running');
+    this.starting = true;
+    try {
+      if (!Array.isArray(requests) || !requests.length || requests.length > 10 || requests.some(request => !request || request.projectId !== requests[0].projectId || (request.format && request.format !== 'mp4'))) throw new Error('Choose one to ten MP4 outputs from the same project');
+      const { project } = await this.store.readStable(requests[0].projectId); validateTimeline(project); requests.forEach(request => makeExportPlan(project, request));
+      const selected = await dialog.showOpenDialog({ title: 'Choose batch export folder', properties: ['openDirectory', 'createDirectory'] });
+      if (selected.canceled || !selected.filePaths[0]) return null;
+      const batch: Batch = { id: randomUUID(), owner, project, views: await this.media.views(project.id, project), requests, folder: selected.filePaths[0], index: 0, outputs: [], canceled: false };
+      this.batch = batch; void this.runBatch(batch); return { id: batch.id, outputPath: batch.folder };
+    } finally { this.starting = false; }
+  }
+  private async runBatch(batch: Batch): Promise<void> {
+    try {
+      for (const request of batch.requests) {
+        if (batch.canceled) break;
+        batch.index++;
+        const output = join(batch.folder, `${batch.project.name.replace(/[<>:"/\\|?*]/g, '_')}-${request.resolution}p-${batch.index}-${batch.id.slice(0, 8)}.mp4`);
+        const started = await this.begin(batch.owner, request, { project: batch.project, views: batch.views, output, batch });
+        if (!started || await this.job?.done !== 'complete') break;
+      }
+    } catch (error) {
+      const progress: ExportProgress = { ...(batch.last ?? { id: batch.id, frame: 0, total: 1, fps: 0, etaSeconds: null, outputPath: batch.folder }), stage: 'error', message: String(error) };
+      batch.last = progress; if (!batch.owner.isDestroyed()) batch.owner.send('export:progress', progress);
+    } finally {
+      if (batch.canceled && !['canceled', 'error'].includes(batch.last?.stage ?? '') && !batch.owner.isDestroyed()) batch.owner.send('export:progress', { ...(batch.last ?? { id: batch.id, frame: 0, total: 1, fps: 0, etaSeconds: null, outputPath: batch.folder, batch: { index: batch.index, total: batch.requests.length, outputs: batch.outputs } }), stage: 'canceled', message: 'Batch canceled. Completed outputs were kept.' });
+      if (this.batch === batch) this.batch = null;
+    }
+  }
+  private async begin(owner: WebContents, request: ExportRequest, fixed?: { project: Project; views: MediaView[]; output: string; batch: Batch }): Promise<{ id: string; outputPath: string } | null> {
     if (this.job) throw new Error('An export is already running');
-    const { project } = await this.store.readStable(request.projectId); validateTimeline(project);
+    const project = fixed?.project ?? (await this.store.readStable(request.projectId)).project; validateTimeline(project);
     const plan = makeExportPlan(project, request);
     const format = request.format ?? 'mp4';
-    const selected = await dialog.showSaveDialog({ title: 'Export your edit', defaultPath: join(app.getPath('videos'), `${project.name.replace(/[<>:"/\\|?*]/g, '_')}.${format}`), filters: [{ name: format.toUpperCase(), extensions: [format] }] });
+    const selected = fixed ? { canceled: fixed.batch.canceled, filePath: fixed.output } : await dialog.showSaveDialog({ title: 'Export your edit', defaultPath: join(app.getPath('videos'), `${project.name.replace(/[<>:"/\\|?*]/g, '_')}.${format}`), filters: [{ name: format.toUpperCase(), extensions: [format] }] });
     if (selected.canceled || !selected.filePath) return null;
     if (this.job) throw new Error('An export is already running');
     const id = randomUUID(), output = selected.filePath.toLowerCase().endsWith('.' + format) ? selected.filePath : selected.filePath + '.' + format;
-    const views = await this.media.views(project.id), folder = await mkdtemp(join(app.getPath('temp'), 'opencut-export-'));
-    const job: Job = { work: { id, project, plan, views }, owner, output, partial: join(dirname(output), `.${basename(output)}.${id}.partial.${format}`), folder,
+    const views = fixed?.views ?? await this.media.views(project.id, project), folder = await mkdtemp(join(app.getPath('temp'), 'opencut-export-'));
+    if (fixed?.batch.canceled) { await rm(folder, { recursive: true, force: true }); return null; }
+    const job: Job = { batch: fixed?.batch, work: { id, project, plan, views }, owner, output, partial: join(dirname(output), `.${basename(output)}.${id}.partial.${format}`), folder,
       frame: 0, writing: false, canceled: false, started: Date.now(), lastReport: 0 };
     this.job = job;
-    void this.run(job);
+    job.done = this.run(job);
     return { id, outputPath: output };
   }
   cancel(): void {
+    if (this.batch) this.batch.canceled = true;
     const job = this.job; if (!job) return;
     job.canceled = true; job.child?.kill(); job.window?.destroy();
   }
@@ -95,7 +148,7 @@ export class ExportRunner {
       });
     });
   }
-  private async run(job: Job): Promise<void> {
+  private async run(job: Job): Promise<ExportProgress['stage']> {
     let terminal: ExportProgress['stage'] = 'complete', message: string | undefined;
     try {
       this.report(job, 'audio');
@@ -118,6 +171,7 @@ export class ExportRunner {
       }
       if (job.frame !== job.work.plan.totalFrames || job.canceled) throw new Error('Export did not complete');
       await rename(job.partial, job.output);
+      job.batch?.outputs.push(job.output);
     } catch (error) {
       terminal = job.canceled ? 'canceled' : 'error';
       message = job.canceled ? 'Export canceled; incomplete output removed.' : String(error).slice(-6000);
@@ -128,6 +182,7 @@ export class ExportRunner {
       if (this.job === job) this.job = null;
       this.report(job, terminal, message);
     }
+    return terminal;
   }
   private async stopPipeline(job: Job): Promise<void> {
     const child = job.child;

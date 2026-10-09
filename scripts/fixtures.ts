@@ -3,8 +3,7 @@ import { resolve, join } from 'node:path';
 import { ffmpegPath } from '../src/main/services/tools';
 import { runProcess } from '../src/main/services/process';
 
-export async function fixtures(): Promise<{ video: string; audio: string; image: string }> {
-  const root = resolve('.test-data/fixtures');
+export async function fixtures(root = resolve('.test-data/fixtures')): Promise<{ video: string; audio: string; image: string }> {
   await mkdir(root, { recursive: true });
   const video = join(root, 'variable-frame-rate.mp4');
   const audio = join(root, 'music.mp3');

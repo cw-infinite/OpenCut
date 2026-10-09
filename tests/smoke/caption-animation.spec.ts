@@ -62,5 +62,28 @@ test('karaoke, word pop and box highlight follow words and match MP4 export', as
       expect(error, `caption at ${time}`).toBeLessThan(22);
     }
     await expect(page.getByRole('alert')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Close export', exact: true }).click();
+    await page.getByRole('button', { name: 'Source browser', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Media library' })).toBeVisible();
+    await page.evaluate(async () => {
+      const project = (await window.opencut.projects.open((await window.opencut.projects.last())!)).project;
+      const clip = project.tracks[0].clips[0];
+      if (clip.type === 'text' && clip.caption) { clip.content = 'um\nRIGHT'; clip.caption.words[0].text = 'um'; }
+      await window.opencut.projects.saveEdit(project);
+    });
+    await page.getByRole('button', { name: 'Projects', exact: true }).click();
+    await page.locator('.project-open').click();
+    await page.getByRole('button', { name: 'Open timeline', exact: true }).click();
+    await page.getByRole('button', { name: 'Captions', exact: true }).click();
+    await page.locator('.filler-words summary').click();
+    await expect(page.getByRole('button', { name: 'Cut filler', exact: true })).toHaveCount(1);
+    await page.getByRole('button', { name: 'Cut filler', exact: true }).click();
+    await expect(page.getByLabel('Caption 1 text')).toHaveValue('RIGHT');
+    await expect(page.getByLabel('Caption 2 start')).toHaveValue('1');
+    await expect(page.getByRole('button', { name: 'Cut filler', exact: true })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Undo edit', exact: true }).click();
+    await expect(page.getByLabel('Caption 1 text')).toHaveValue('um\nRIGHT');
+    await expect(page.getByLabel('Caption 2 start')).toHaveValue('2');
+    await expect(page.getByRole('alert')).toHaveCount(0);
   } finally { await app.evaluate(({ app }) => app.exit(0)).catch(() => {}); await app.close().catch(() => {}); }
 });

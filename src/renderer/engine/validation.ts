@@ -1,4 +1,5 @@
 import { validateText } from './textValidation';
+import { validateVisuals } from './visualValidation';
 import type { Animatable, Clip, Project } from '../../shared/types';
 import { transitionTypes } from './transitions';
 function number(value: unknown, min: number, max: number, label: string): asserts value is number {
@@ -22,6 +23,7 @@ function animated(value: Animatable<number>, min: number, max: number, label: st
 }
 export function validateClipValues(clip: Clip): void {
   if (!clip || !['media', 'text'].includes(clip.type) || !clip.transform || !Array.isArray(clip.effects)) throw new Error('Invalid clip data');
+  validateVisuals(clip);
   animated(clip.opacity, 0, 1, 'opacity');
   animated(clip.transform.x, -100, 100, 'position'); animated(clip.transform.y, -100, 100, 'position');
   animated(clip.transform.scale, .001, 100, 'scale'); animated(clip.transform.rotation, -36000, 36000, 'rotation');

@@ -9,6 +9,7 @@ import { srtTime } from '../src/renderer/engine/captions';
 import { runProcess } from '../src/main/services/process';
 import { ffmpegPath, ffprobePath } from '../src/main/services/tools';
 import type { ExportRequest } from '../src/shared/export';
+import { exportPresets, estimatedBytes } from '../src/renderer/engine/exportPresets';
 
 const request: ExportRequest = { projectId: 'p', resolution: 720, fps: 30, quality: 'high', bitrateMbps: 12, audioBitrate: 192, encoderPreference: 'software' };
 function fixture() {
@@ -18,6 +19,15 @@ function fixture() {
   return project;
 }
 describe('export planning', () => {
+  it('applies platform shapes without changing the project and estimates bitrate sizes', () => {
+    const project = fixture();
+    expect(makeExportPlan(project, { ...request, ...exportPresets.TikTok })).toMatchObject({ width: 1080, height: 1920, fps: 30 });
+    expect(makeExportPlan(project, { ...request, aspect: 'square' })).toMatchObject({ width: 720, height: 720 });
+    expect(project.settings).toMatchObject({ width: 1920, height: 1080 });
+    expect(estimatedBytes({ ...request, format: 'mp4', quality: 'custom', bitrateMbps: 8 }, 10e6)).toBe(10240000);
+    expect(estimatedBytes({ ...request, format: 'wav' }, 10e6)).toBe(1920000);
+    expect(estimatedBytes({ ...request, format: 'mp3' }, 10e6)).toBe(240000);
+  });
   it('maps portrait/landscape sizes to even dimensions and rejects invalid ranges/settings', () => {
     const project = fixture(); expect(makeExportPlan(project, request)).toMatchObject({ width: 1280, height: 720, totalFrames: 60 });
     project.settings.width = 1080; project.settings.height = 1920;

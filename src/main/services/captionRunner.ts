@@ -9,6 +9,7 @@ import { ffmpegPath, findWhisper } from './tools';
 import { audioMixArgs } from '../../renderer/engine/ffmpegArgs';
 import { durationOf } from '../../renderer/engine/timeline';
 import { whisperWords } from '../../renderer/engine/captionImport';
+import { refineSpeechTiming, silenceCollector } from '../../renderer/engine/speechTiming';
 
 export class CaptionRunner {
   private busy = false;
@@ -31,13 +32,14 @@ export class CaptionRunner {
       return readFile(result.filePaths[0], 'utf8');
     });
   }
-  private run(path: string, args: string[], progress: (progress: CaptionProgress) => void): Promise<void> {
+  private run(path: string, args: string[], progress: (progress: CaptionProgress) => void, stderr?: (text: string) => void): Promise<void> {
     if (this.cancelled) return Promise.reject(new Error('Caption generation cancelled'));
     return new Promise((resolve, reject) => {
       const child = this.child = spawn(path, args, { windowsHide: true });
       let tail = '';
       child.stdout?.resume();
       child.stderr?.on('data', chunk => {
+        stderr?.(String(chunk));
         tail = (tail + chunk).slice(-8000);
         const matches = [...String(chunk).matchAll(/progress\s*=\s*(\d+)%/g)];
         if (matches.length) progress({ stage: 'Transcribing locally', percent: Number(matches.at(-1)![1]) });
@@ -69,10 +71,12 @@ export class CaptionRunner {
       const mix = join(folder, 'mix.wav'), mono = join(folder, 'speech.wav'), output = join(folder, 'transcript');
       progress({ stage: 'Preparing speech audio', percent: 0 });
       await this.run(ffmpegPath, ['-v', 'error', '-nostdin', '-y', ...audioMixArgs(project, { start, end, fps: 30, totalFrames: 0, format: 'wav' }, mix)], progress);
-      await this.run(ffmpegPath, ['-v', 'error', '-nostdin', '-y', '-i', mix, '-ar', '16000', '-ac', '1', mono], progress);
+      const silence = silenceCollector();
+      await this.run(ffmpegPath, ['-v', 'info', '-nostdin', '-y', '-i', mix, '-af', 'silencedetect=noise=-50dB:d=0.12', '-ar', '16000', '-ac', '1', mono], progress, silence.push);
+      silence.push('\n');
       progress({ stage: 'Transcribing locally', percent: 0 });
-      await this.run(whisper, ['-m', model, '-f', mono, '-l', 'en', '-ng', '-ojf', '-ml', '1', '-sow', '-pp', '-of', output], progress);
-      const words = whisperWords(JSON.parse(await readFile(output + '.json', 'utf8')), offset, end - start);
+      await this.run(whisper, ['-m', model, '-f', mono, '-l', 'en', '-ng', '-nfa', '-dtw', modelName, '-ojf', '-ml', '1', '-sow', '-pp', '-of', output], progress);
+      const words = refineSpeechTiming(whisperWords(JSON.parse(await readFile(output + '.json', 'utf8')), 0, end - start), silence.gaps).map(word => ({ ...word, start: word.start + offset, end: word.end + offset }));
       if (this.cancelled) throw new Error('Caption generation cancelled');
       return words;
     } finally { if (folder) await rm(folder, { recursive: true, force: true }).catch(() => {}); this.busy = false; }

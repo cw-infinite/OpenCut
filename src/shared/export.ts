@@ -3,6 +3,7 @@ import type { MediaView } from './api';
 export type Encoder = 'libx264' | 'h264_nvenc' | 'h264_qsv' | 'h264_amf';
 export type Quality = 'low' | 'medium' | 'high' | 'maximum' | 'custom';
 export interface ExportRequest {
+  aspect?: 'project' | 'landscape' | 'portrait' | 'square';
   format?: 'mp4' | 'mp3' | 'wav' | 'aac';
   projectId: string;
   resolution: 480 | 720 | 1080;
@@ -16,7 +17,8 @@ export interface ExportRequest {
 export interface ExportPlan extends ExportRequest { width: number; height: number; start: number; end: number; totalFrames: number }
 export interface ExportWork { id: string; project: Project; views: MediaView[]; plan: ExportPlan }
 export interface ExportProgress {
-  id: string; stage: 'audio' | 'encoding' | 'finalizing' | 'complete' | 'canceled' | 'error';
+  batch?: { index: number; total: number; outputs: string[] };
+  id: string; stage: 'queued' | 'audio' | 'encoding' | 'finalizing' | 'complete' | 'canceled' | 'error';
   frame: number; total: number; fps: number; etaSeconds: number | null;
   outputPath: string; encoder?: Encoder; message?: string;
 }

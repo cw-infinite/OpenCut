@@ -94,9 +94,9 @@ export function trimClip(project: Project, id: string, edge: 'start' | 'end', ti
   }
   track.clips.sort((a, b) => a.start - b.start);
 }
-export function deleteClips(project: Project, ids: string[], ripple = false): void {
+export function deleteClips(project: Project, ids: string[], ripple = false, linked = true): void {
   const links = project.tracks.flatMap(track => track.clips.filter(clip => ids.includes(clip.id) && clip.linkId).map(clip => clip.linkId));
-  ids = [...ids, ...project.tracks.flatMap(track => track.clips.filter(clip => clip.linkId && links.includes(clip.linkId)).map(clip => clip.id))];
+  if (linked) ids = [...ids, ...project.tracks.flatMap(track => track.clips.filter(clip => clip.linkId && links.includes(clip.linkId)).map(clip => clip.id))];
   for (const track of project.tracks) {
     const removed = track.clips.filter(clip => ids.includes(clip.id));
     if (removed.length && track.locked) throw new Error('Track is locked');

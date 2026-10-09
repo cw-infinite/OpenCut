@@ -6,6 +6,7 @@ import { durationOf } from './timeline';
 import { frameTime } from './time';
 
 export function makeExportPlan(project: Project, request: ExportRequest): ExportPlan {
+  if (request.aspect && !['project', 'landscape', 'portrait', 'square'].includes(request.aspect)) throw new Error('Invalid export aspect ratio');
   if (request.format !== undefined && !['mp4', 'mp3', 'wav', 'aac'].includes(request.format)) throw new Error('Invalid export format');
   if (![480, 720, 1080].includes(request.resolution) || ![24, 25, 30, 50, 60].includes(request.fps) ||
     !['low', 'medium', 'high', 'maximum', 'custom'].includes(request.quality) ||
@@ -13,7 +14,7 @@ export function makeExportPlan(project: Project, request: ExportRequest): Export
     !Number.isFinite(request.bitrateMbps) || request.bitrateMbps < .1 || request.bitrateMbps > 100) throw new Error('Invalid export settings');
   const duration = durationOf(project), start = request.range?.start ?? 0, end = request.range?.end ?? duration;
   if (![start, end].every(Number.isSafeInteger) || start < 0 || end > duration || end <= start) throw new Error('Choose a nonempty range within the timeline');
-  const aspect = project.settings.width / project.settings.height;
+  const aspect = request.aspect === 'landscape' ? 16 / 9 : request.aspect === 'portrait' ? 9 / 16 : request.aspect === 'square' ? 1 : project.settings.width / project.settings.height;
   const height = aspect >= 1 ? request.resolution : Math.round(request.resolution / aspect / 2) * 2;
   const width = aspect >= 1 ? Math.round(request.resolution * aspect / 2) * 2 : request.resolution;
   if (Math.max(width, height) > 1920 || Math.min(width, height) < 2) throw new Error('This aspect ratio exceeds the 1080p export limits');
