@@ -54,7 +54,7 @@ export interface OpenCutApi {
     relink(projectId: string, assetId: string): Promise<Project>;
     record(projectId: string, bytes: ArrayBuffer): Promise<MediaAsset>;
     beats(projectId: string, clipId: string): Promise<number[]>;
-    derive(projectId: string, clipId: string, operation: 'freeze' | 'reverse', time: number): Promise<MediaAsset>;
+    derive(projectId: string, clipId: string, operation: 'freeze' | 'reverse' | 'stabilize', time: number): Promise<MediaAsset>;
     pick(projectId: string): Promise<Project>;
     drop(projectId: string, files: File[]): Promise<Project>;
     views(projectId: string): Promise<MediaView[]>;

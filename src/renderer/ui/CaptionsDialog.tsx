@@ -8,6 +8,7 @@ import { textStyles } from '../engine/text';
 import { mergeCaption, splitCaption } from '../engine/captionEdits';
 import { captionPresets, styleCaption } from '../engine/captionStyle';
 import { FillerWords } from './FillerWords';
+import { TranscriptEditor } from './TranscriptEditor';
 
 export function CaptionsDialog({ range, onClose }: { range: { start: number; end: number }; onClose(): void }) {
   const state = useEditor(), project = state.project!;
@@ -51,6 +52,7 @@ export function CaptionsDialog({ range, onClose }: { range: { start: number; end
     {!!clips.length && <><div className="caption-actions"><input aria-label="Find caption text" placeholder="Find text" value={find} onChange={event => setFind(event.target.value)}/><input aria-label="Replace caption text" placeholder="Replace with" value={replace} onChange={event => setReplace(event.target.value)}/><button disabled={busy || !find} onClick={() => state.edit(project => { for (const track of project.tracks) if (!track.locked) for (const clip of track.clips) if (clip.type === 'text' && clip.caption && clip.content.includes(find)) { clip.content = clip.content.split(find).join(replace); clip.caption.words = []; } })}>Replace all</button><button disabled={busy} onClick={() => state.edit(project => { for (const track of project.tracks) if (!track.locked) for (const clip of track.clips) if (clip.type === 'text' && clip.caption) restyle(clip); })}>Restyle all</button></div>
       <p className="subtle">Locked tracks are protected. Word animations require generated word timings. Text edits clear word timings; drag timeline edges to trim, or change start/duration below.</p></>}
     {!!clips.length && <FillerWords disabled={busy} onPreview={onClose}/>}
+    {!!clips.length && <TranscriptEditor disabled={busy} onPreview={onClose}/>}
     <div className="caption-list">{clips.map((clip, i) => <div className="caption-row" key={clip.id}>
       <button title="Seek to caption" onClick={() => { state.seek(clip.start); state.select([clip.id]); }}>{i + 1}</button>
       <textarea aria-label={`Caption ${i + 1} text`} value={clip.content} disabled={busy} onChange={event => edit(clip.id, clip => { clip.content = event.target.value; clip.caption!.words = []; })}/>

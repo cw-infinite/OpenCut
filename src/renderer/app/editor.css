@@ -150,3 +150,4 @@
 .inspector .panel-heading { flex-wrap: wrap; height: auto; min-height: 57px; padding: 10px 0; gap: 6px; }
 .preview-zoom { flex-wrap: wrap; }
 .canvas-surface .canvas-hint { max-width: 100%; text-align: center; }
+.transcript-editor { margin: 18px 0; padding: 14px; border: 1px solid #46515e; border-radius: 8px; } .transcript-words { display: flex; flex-wrap: wrap; gap: 6px; max-height: 240px; overflow: auto; } .transcript-words button { border: 1px solid #56616d; border-radius: 5px; padding: 6px 10px; font-size: 16px; } .transcript-words button[aria-pressed="true"] { background: #b9e794; color: #172011; }

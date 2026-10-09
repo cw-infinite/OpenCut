@@ -4,7 +4,7 @@ Nothing from the required product scope has been intentionally dropped. Implemen
 
 The foundation includes desktop/tool setup (M0), projects/import (M1), multi-track editing/preview (M2), and MP4 export (M3).
 
-M4–M9 are implemented: animation, advanced audio, offline English captions with animated word presets/model controls/filler cuts, visual effects, multi-quality export, presets, frame/cover export, silence removal, media relink, markers/groups, and screen/webcam recording. M10 stays optional and deferred until broader acceptance is complete.
+M4–M9 are implemented: animation, advanced audio, offline English captions with animated word presets/model controls/filler cuts, visual effects, multi-quality export, presets, frame/cover export, silence removal, media relink, markers/groups, and screen/webcam recording. M10 is now in progress with transcript-based editing and local stabilization. Motion tracking, background removal, smart reframe and local text-to-speech remain unimplemented.
 
 Remaining acceptance coverage: real phone/VFR/rotated and long-media corpus, manual listening/A-V inspection in VLC/Windows Media Player, hardware performance targets, one-hour drift/memory measurements, physical microphone/webcam and system-audio capture, and optional small.en download/inference. Caption timing is tested on two-minute synthetic speech; this does not establish 200 ms word accuracy on arbitrary human speech. Automated synthetic tests do not substitute for these checks.
 

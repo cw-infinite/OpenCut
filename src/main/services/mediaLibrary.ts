@@ -99,10 +99,10 @@ export class MediaLibrary {
       await this.store.update(projectId, current => { current.media[id] = asset; }); return asset;
     } finally { if (raw) await rm(raw, { force: true }).catch(() => {}); this.busy.delete(projectId); }
   }
-  async derive(projectId: string, clipId: string, operation: 'freeze' | 'reverse', time: number, progress: (update: ImportProgress) => void) {
+  async derive(projectId: string, clipId: string, operation: 'freeze' | 'reverse' | 'stabilize', time: number, progress: (update: ImportProgress) => void) {
     this.assertIdle(projectId); this.busy.add(projectId);
     try {
-      if (!['freeze', 'reverse'].includes(operation)) throw new Error('Invalid media operation');
+      if (!['freeze', 'reverse', 'stabilize'].includes(operation)) throw new Error('Invalid media operation');
       const { project } = await this.store.readStable(projectId);
       const track = project.tracks.find(track => track.clips.some(clip => clip.id === clipId));
       const clip = track?.clips.find(clip => clip.id === clipId);

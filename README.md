@@ -2,7 +2,15 @@
 
 A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
 
-**Current build: 0.9.1 — milestones M0–M9 plus readability and editing improvements, with broader manual acceptance still pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+**Current build: 0.10.0 — M0–M9 plus the first M10 features: transcript editing and video stabilization. Broader manual acceptance remains pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+
+## New in 0.10.0
+
+Open **Captions → Edit video by transcript** after generating timed captions. Click words to toggle selection; Shift-click selects a range. Deleting selected words removes their intervals across every track in one undoable edit. Gaps remain; review speech recognition and word timing before cutting. Imported SRT and manually edited captions without word timing cannot drive these cuts.
+
+Select a video clip and choose **Stabilize video** in the inspector. Processing creates a local copy and preserves the clip timing, speed, direction and visual settings. Undo restores the original clip. Exposed edges are mirrored; review results for moving subjects. Originals remain intact.
+
+M10 remains in progress: motion tracking, background removal, smart reframe and local text-to-speech are still pending.
 
 ## Easier editing in 0.9.1
 

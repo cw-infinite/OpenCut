@@ -4,8 +4,21 @@ import type { MediaAsset, MediaClip } from '../../shared/types';
 import { ffmpegJob, prepareMedia } from './ffmpeg';
 import { probe } from './mediaProbe';
 
-export async function deriveMedia(asset: MediaAsset, clip: MediaClip, operation: 'freeze' | 'reverse', time: number, id: string, folder: string, fps: number, progress: (stage: string, percent: number) => void): Promise<MediaAsset> {
+export async function deriveMedia(asset: MediaAsset, clip: MediaClip, operation: 'freeze' | 'reverse' | 'stabilize', time: number, id: string, folder: string, fps: number, progress: (stage: string, percent: number) => void): Promise<MediaAsset> {
   const derived = join(folder, 'derived'); await mkdir(derived, { recursive: true });
+  if (operation === 'stabilize') {
+    if (asset.kind !== 'video') throw new Error('Select a video clip to stabilize');
+    const span = clip.sourceOut - clip.sourceIn, seek = (clip.sourceIn / 1e6).toFixed(6), length = (span / 1e6).toFixed(6), output = join(derived, `stabilized-${id}.mp4`);
+    try {
+      await ffmpegJob(['-ss', seek, '-t', length, '-i', asset.proxyPath ?? asset.path,
+        ...(asset.hasAudio ? ['-ss', seek, '-t', length, '-i', asset.path] : []),
+        '-map', '0:v:0', ...(asset.hasAudio ? ['-map', '1:a:0', '-c:a', 'aac', '-b:a', '192k'] : ['-an']),
+        '-vf', 'deshake=rx=32:ry=32:edge=mirror:blocksize=8:contrast=125:search=0,setsar=1',
+        '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '14', '-g', '1', '-pix_fmt', 'yuv420p', '-t', length, '-movflags', '+faststart', output], span, percent => progress('Stabilizing video', percent));
+      const result = await probe(output, id); result.duration = span;
+      await prepareMedia(result, folder, fps, progress); return result;
+    } catch (error) { await rm(output, { force: true }).catch(() => {}); throw error; }
+  }
   if (operation === 'freeze') {
     if (asset.kind !== 'video' || !Number.isSafeInteger(time) || time < clip.start || time >= clip.start + clip.duration) throw new Error('Place the playhead inside a video clip');
     const offset = (time - clip.start) * clip.speed;

@@ -12,7 +12,15 @@
 | M7: offline captions | Automated acceptance passed on base.en | 50 unit/integration tests and all 12 desktop tests pass. Animated presets match MP4 frames; two-minute synthetic speech has 25 phrase anchors with maximum 110 ms onset offset. Filler cuts, linked/reverse/speed timing and undo verified. small.en availability/download controls implemented; actual optional-model inference and real human/VLC acceptance remain unverified. |
 | M8: visual effects | Automated acceptance passed | All 31 effect/filter/adjustment/blend/mask/chroma/PiP cases change preview and match exported frames. 54 unit/integration tests and all 13 desktop tests passed at the M8 gate. Hardware performance and long-project acceptance remain manual follow-ups. |
 | M9: export and project polish | Automated acceptance passed | Typecheck, 57 unit/integration tests and all 16 desktop tests pass. Sequential 1080p/720p/480p export, TikTok 1080×1920/30, estimates, PNG/JPEG frames and duplicate-safe covers, batch cancel cleanup, silence removal/undo, missing-media relink, markers/groups, synthetic webcam and isolated test-window recording verified. Physical devices/system audio need manual acceptance. |
-| M10 | Optional, deferred | Only after M0–M9 are solid |
+| M10 | In progress | Transcript-based editing and local video stabilization implemented. Tracking, background removal, smart reframe and local TTS remain pending. |
+
+## 0.10.0 first M10 features
+
+Transcript-based editing and video stabilization are implemented. Timed-word selection supports toggles and Shift ranges; deletion cuts the selected intervals across tracks as one undoable edit. Stabilization creates a project-owned processed copy while preserving clip placement, duration and settings.
+
+Typecheck, 62 unit/integration tests and all 19 desktop tests pass. A synthetic camera-shake fixture measures reduced frame-to-frame motion. Desktop acceptance covers transcript cutting, undo, stabilization undo/redo, saved-project reload and a real two-second MP4 with audio. The transcript UI screenshot was reviewed. Real-world stabilization quality and the broader manual checks remain pending.
+
+Two further checks pass in the packaged 0.10.0 application: startup/bundled tools and the full transcript/stabilization/export workflow. Release output: `dist/0.10.0/`. Packaging uses the installed Electron distribution when GitHub is unavailable.
 
 ## 0.9.1 editing improvements
 

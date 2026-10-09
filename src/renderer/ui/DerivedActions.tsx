@@ -8,7 +8,7 @@ import { evaluate } from '../engine/keyframes';
 export function DerivedActions({ clip }: { clip: MediaClip }): JSX.Element {
   const state = useEditor(), [busy, setBusy] = useState(false), progress = useProjects(state => state.progress);
   const asset = state.project!.media[clip.mediaId];
-  const derive = async (operation: 'reverse' | 'freeze') => {
+  const derive = async (operation: 'reverse' | 'freeze' | 'stabilize') => {
     const snapshot = useEditor.getState(), project = snapshot.project!;
     setBusy(true); useEditor.setState({ playing: false });
     try {
@@ -20,9 +20,9 @@ export function DerivedActions({ clip }: { clip: MediaClip }): JSX.Element {
       useProjects.setState({ views: await window.opencut.media.views(project.id) });
       current.edit(project => {
         const original = editable(project, clip.id).clip;
-        if (original.type !== 'media' || original.mediaId !== clip.mediaId || original.sourceIn !== clip.sourceIn || original.sourceOut !== clip.sourceOut || original.speed !== clip.speed) throw new Error('The clip changed during preparation. The prepared media is available in the library.');
-        if (operation === 'reverse') {
-          original.mediaId = result.id; original.sourceIn = 0; original.sourceOut = result.duration; original.reverse = false;
+        if (original.type !== 'media' || original.mediaId !== clip.mediaId || original.sourceIn !== clip.sourceIn || original.sourceOut !== clip.sourceOut || original.speed !== clip.speed || original.reverse !== clip.reverse) throw new Error('The clip changed during preparation. The prepared media is available in the library.');
+        if (operation === 'reverse' || operation === 'stabilize') {
+          original.mediaId = result.id; original.sourceIn = 0; original.sourceOut = result.duration; if (operation === 'reverse') original.reverse = false;
         } else {
           const track = makeTrack(crypto.randomUUID(), 'video', 'Freeze frame');
           const frozen = makeMediaClip(crypto.randomUUID(), result, track.id, snapshot.playhead), time = snapshot.playhead - clip.start;
@@ -38,5 +38,6 @@ export function DerivedActions({ clip }: { clip: MediaClip }): JSX.Element {
   return <section><div className="inspector-buttons">
     <button className="secondary" disabled={busy || asset.kind === 'image'} onClick={() => void derive('reverse')}>Reverse clip</button>
     <button className="secondary" disabled={busy || asset.kind !== 'video' || state.playhead < clip.start || state.playhead >= clip.start + clip.duration} onClick={() => void derive('freeze')}>Freeze frame</button>
-  </div><p className="subtle">{busy ? `${progress?.stage ?? 'Preparing media'} · ${progress?.percent ?? 0}%` : 'Freeze adds a 5-second still on a new track. Reverse creates local media; Undo restores the clip.'}</p></section>;
+    <button className="secondary" disabled={busy || asset.kind !== 'video'} onClick={() => void derive('stabilize')}>Stabilize video</button>
+  </div><p className="subtle">{busy ? `${progress?.stage ?? 'Preparing media'} · ${progress?.percent ?? 0}%` : 'Freeze adds a 5-second still. Reverse and stabilization create local copies; Undo restores the clip. Stabilization reduces camera shake and mirrors exposed edges; review the result for moving subjects.'}</p></section>;
 }
