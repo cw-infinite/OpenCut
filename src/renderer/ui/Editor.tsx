@@ -1,3 +1,5 @@
+import { Voiceover } from './Voiceover';
+import { CaptionsDialog } from './CaptionsDialog';
 import { useEffect, useState } from 'react';
 import { Film, Plus, Sun, Moon, Search, ArrowLeft } from 'lucide-react';
 import { useEditor } from '../state/editor';
@@ -16,6 +18,7 @@ export function Editor({ onBack }: { onBack(): void }): JSX.Element {
   const [search, setSearch] = useState(''), [light, setLight] = useState(false);
   const [range, setRange] = useState({ start: 0, end: 0 });
   const [exportOpen, setExportOpen] = useState(false);
+  const [captionsOpen, setCaptionsOpen] = useState(false);
   useEffect(() => { state.load(source.project!); return () => useEditor.setState({ playing: false }); }, []);
   useEffect(() => {
     const save = async () => {
@@ -61,9 +64,10 @@ export function Editor({ onBack }: { onBack(): void }): JSX.Element {
   return <div className={'editing-workspace ' + (light ? 'light' : '')}><div className="editor-subbar"><button className="secondary" onClick={async () => {
     useEditor.setState({ playing: false });
     try { await source.setProject(await window.opencut.projects.saveEdit(useEditor.getState().project!)); useEditor.setState({ dirty: false }); onBack(); } catch (error) { useEditor.setState({ error: String(error) }); }
-  }}><ArrowLeft size={14}/> Source browser</button><span>{state.dirty ? 'Saving…' : 'All edits saved'}{range.end > range.start ? ` · Range ${timecode(range.start)} – ${timecode(range.end)}` : ''}</span><div className="editor-export-actions"><button className="secondary" onClick={state.addText}>Add text</button><button title="Change theme" aria-label="Change theme" onClick={() => setLight(!light)}>{light ? <Moon size={16}/> : <Sun size={16}/>}</button><button className="primary" onClick={() => setExportOpen(true)}>Export</button></div></div>
+  }}><ArrowLeft size={14}/> Source browser</button><span>{state.dirty ? 'Saving…' : 'All edits saved'}{range.end > range.start ? ` · Range ${timecode(range.start)} – ${timecode(range.end)}` : ''}</span><div className="editor-export-actions"><Voiceover/><button className="secondary" onClick={() => setCaptionsOpen(true)}>Captions</button><button className="secondary" onClick={state.addText}>Add text</button><button title="Change theme" aria-label="Change theme" onClick={() => setLight(!light)}>{light ? <Moon size={16}/> : <Sun size={16}/>}</button><button className="primary" onClick={() => setExportOpen(true)}>Export</button></div></div>
     {state.error && <div className="error" role="alert">{state.error}<button onClick={() => useEditor.setState({ error: null })}>Dismiss</button></div>}
     <div className="editor-top"><section className="editor-library"><div className="panel-heading"><h2>Media</h2><Film size={15}/></div><div className="search"><Search size={13}/><input placeholder="Search media" aria-label="Search timeline media" value={search} onChange={event => setSearch(event.target.value)}/></div><p className="subtle">Drag to a track or double-click to add.</p><div className="media-grid">{source.views.filter(view => fileName(view.asset.path).toLowerCase().includes(search.toLowerCase())).map(view => <button className="editor-asset media-card" key={view.asset.id} disabled={view.asset.status !== 'ready'} draggable={view.asset.status === 'ready'} onDragStart={event => event.dataTransfer.setData('application/opencut-media', view.asset.id)} onDoubleClick={() => state.addMedia(view.asset.id)}><div className="media-thumb">{view.thumbnail ? <img src={view.thumbnail} alt=""/> : <Waveform peaks={view.peaks}/>}</div><strong>{fileName(view.asset.path)}</strong><small>{view.asset.kind} <Plus size={10}/></small></button>)}</div></section><Preview/><Inspector/></div><Timeline/>
     {exportOpen && <ExportDialog range={range} onClose={() => setExportOpen(false)}/>}
+    {captionsOpen && <CaptionsDialog range={range} onClose={() => setCaptionsOpen(false)}/>}
   </div>;
 }

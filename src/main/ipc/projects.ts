@@ -4,6 +4,7 @@ import type { ProjectStore } from '../services/projectStore';
 import type { MediaLibrary } from '../services/mediaLibrary';
 import { mediaExtensions } from '../services/mediaProbe';
 import { validateTimeline } from '../../renderer/engine/timeline';
+import { analyzeBeats } from '../services/beats';
 import { runProcess } from '../services/process';
 
 export function projectHandlers(store: ProjectStore, library: MediaLibrary, trusted: (event: Electron.IpcMainInvokeEvent) => void): void {
@@ -16,7 +17,7 @@ export function projectHandlers(store: ProjectStore, library: MediaLibrary, trus
   handle('projects:last', () => store.last());
   handle('projects:saveEdit', (_event, input) => store.update(input.id, project => {
     if (!Array.isArray(input.tracks) || !Array.isArray(input.markers)) throw new Error('Invalid timeline data');
-    project.tracks = input.tracks; project.markers = input.markers; project.captionStyles = input.captionStyles;
+    project.masterVolume = input.masterVolume; project.tracks = input.tracks; project.markers = input.markers; project.captionStyles = input.captionStyles;
     validateTimeline(project);
   }));
   handle('projects:create', async (_event, name, settings) => { const project = await store.create(name, settings); await store.remember(project.id); return project; });
@@ -44,6 +45,8 @@ export function projectHandlers(store: ProjectStore, library: MediaLibrary, trus
   });
   handle('media:drop', (event, id, paths) => library.import(id, paths, progress => { if (!event.sender.isDestroyed()) event.sender.send('media:progress', progress); }));
   handle('media:views', (_event, id) => library.views(id));
+  handle('media:record', (_event, id, bytes) => library.record(id, bytes));
+  handle('media:beats', (_event, id, clipId) => analyzeBeats(store, id, clipId));
   handle('media:derive', (event, id, clipId, operation, time) => library.derive(id, clipId, operation, time, progress => { if (!event.sender.isDestroyed()) event.sender.send('media:progress', progress); }));
   handle('media:remove', (_event, id, assetId) => {
     library.assertIdle(id);

@@ -101,3 +101,9 @@
 .canvas-text-editor > div { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 
 .text-transform .rotate-handle { top: -22px; }
+
+.audio-fade-handle { position: absolute; top: 26px; z-index: 5; transform: translateX(-50%); width: 13px; padding: 0; border: 0; background: #263c40; color: #88e4ed; cursor: ew-resize; }
+
+.captions-modal{width:min(950px,95vw);max-height:90vh;overflow:auto}.caption-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.caption-actions input{width:160px}.caption-list{display:flex;flex-direction:column;gap:10px}.caption-row{display:grid;grid-template-columns:30px minmax(160px,1fr) 100px 100px 120px;gap:8px;align-items:center;padding:10px;background:#ffffff08;border-radius:8px}.caption-row textarea{min-height:64px;resize:vertical}.caption-row label{font-size:11px}.caption-row input{width:100%}.caption-row>div{display:flex;flex-direction:column;gap:4px}
+
+.editing-workspace .modal.captions-modal{width:min(950px,95vw);padding:24px}.captions-modal .modal-heading{margin-bottom:16px}.captions-modal .caption-row label{margin:0}.caption-row>div button{font-size:11px;padding:4px;text-align:left}.caption-row textarea{background:#14161a;border:1px solid #3d414a;border-radius:4px;color:#eee;padding:8px}

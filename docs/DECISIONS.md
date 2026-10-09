@@ -35,3 +35,12 @@
 References: [electron-vite requirements](https://electron-vite.org/guide/), [official Whisper releases](https://github.com/ggml-org/whisper.cpp/releases), [official model repository](https://huggingface.co/ggerganov/whisper.cpp).
 
 - 0.5.1 normalizes waveform caches at the media IPC boundary. Both plain arrays and the older `{ buckets, peaks }` format return finite, bounded sample arrays. Corrupt or missing disposable waveform data returns an empty waveform without rewriting projects or source media. Regression testing reproduced the original `peaks.slice is not a function` crash and verifies Projects restore/navigation after the fix.
+
+- M6 ducking uses speech-clip activity, with attack before speech and release after; overlapping envelopes use their minimum gain. Noise reduction and loudnorm are export-only and labelled in the inspector.
+- Beat markers use local energy-onset detection; they are candidates, not guaranteed musical downbeats. Existing timeline snapping targets them.
+- Voiceover requires an explicit record action. Only the main editor may request audio capture; camera and hidden-worker capture remain denied. Recordings are converted to PCM WAV before import to recover reliable duration metadata. Automated tests use a fake microphone.
+- AAC ADTS duration estimates can be inaccurate; audio export acceptance measures decoded samples instead.
+
+- M7 core uses bundled base.en, CPU-only Whisper full JSON with word-sized segments. Offsets from Whisper are milliseconds; stored word times are clip-relative microseconds. Whole-timeline/range generation uses the audible mix; selected-clip generation isolates its audio, preserves speed/reversal, and restores the clip timeline offset.
+- Caption chunking defaults to 32 characters, two lines, six words, punctuation boundaries, 400 ms minimum where the next cue permits, and five-second grouping. A single overlong word is kept intact. Imported SRT is plain text and rejects overlapping cues; it has no invented word timings. Text edits clear word timings. Trim/split shifts metadata like animation keys.
+- Caption generation has explicit cancellation, temp cleanup and process termination on app quit. The renderer cannot choose executable/model paths. The current caption UI deliberately labels base.en; larger-model setup, karaoke/filler controls and full M7 acceptance remain unfinished.

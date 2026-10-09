@@ -1,5 +1,6 @@
 import type { Project, MediaAsset } from './types';
 import type { ExportRequest, ExportProgress, ExportWork } from './export';
+import type { CaptionRequest, CaptionWord, CaptionProgress } from './captions';
 export interface ProjectSummary { id: string; name: string; updatedAt: string; mediaCount: number; settings: Project['settings'] }
 export interface MediaView { asset: MediaAsset; url: string; thumbnail?: string; peaks: number[] }
 export interface ImportProgress { projectId: string; name: string; stage: string; percent: number; error?: string }
@@ -12,6 +13,13 @@ export interface ToolCheck {
 export interface ToolReport { ready: boolean; tools: ToolCheck[]; checkedAt: string }
 export interface SetupProgress { stage: string; percent: number | null; detail: string }
 export interface OpenCutApi {
+  captions: {
+    models(): Promise<Record<'base.en' | 'small.en', boolean>>;
+    generate(request: CaptionRequest): Promise<CaptionWord[]>;
+    cancel(): Promise<void>;
+    importSrt(): Promise<string | null>;
+    onProgress(callback: (progress: CaptionProgress) => void): () => void;
+  };
   fonts(): Promise<string[]>;
   export: {
     start(request: ExportRequest): Promise<{ id: string; outputPath: string } | null>;
@@ -35,6 +43,8 @@ export interface OpenCutApi {
     saveEdit(project: Project): Promise<Project>;
   };
   media: {
+    record(projectId: string, bytes: ArrayBuffer): Promise<MediaAsset>;
+    beats(projectId: string, clipId: string): Promise<number[]>;
     derive(projectId: string, clipId: string, operation: 'freeze' | 'reverse', time: number): Promise<MediaAsset>;
     pick(projectId: string): Promise<Project>;
     drop(projectId: string, files: File[]): Promise<Project>;
@@ -43,7 +53,7 @@ export interface OpenCutApi {
     onProgress(callback: (progress: ImportProgress) => void): () => void;
   };
   checkTools(): Promise<ToolReport>;
-  setupTools(): Promise<ToolReport>;
+  setupTools(small?: boolean): Promise<ToolReport>;
   onSetupProgress(callback: (progress: SetupProgress) => void): () => void;
 }
 declare global { interface Window { opencut: OpenCutApi } }

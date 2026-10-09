@@ -2,7 +2,7 @@
 
 A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
 
-**Current build: 0.5.1 — project import, multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles, canvas preview and MP4 export.** Captions and advanced audio/effects are still in development. See [milestone status](docs/STATUS.md).
+**Current build: 0.6.1 — project import, multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles, canvas preview and MP4 export.** Advanced audio includes master/solo, fades, ducking, beat markers, voiceover and WAV/MP3/AAC export. Offline English captions now generate from the timeline, an in/out range, or a selected clip, with editable lists and SRT import/export. Animated caption presets and visual effects remain in development. See [milestone status](docs/STATUS.md).
 
 0.5.1 fixes a black screen when Projects restores media with an older waveform cache. Both array and `{ buckets, peaks }` caches are supported; missing or damaged waveform caches no longer prevent opening a project.
 
@@ -60,3 +60,11 @@ Run `npm run dev`, then **Open projects → New project → Create project → O
 Checks include generated VFR import, frame seeking, restart restore, timeline operations, 200-step history capacity, and real MP4 exports. Animated title frames at 0.2, 0.8, and 1.8 seconds match preview within lossy-encoding tolerance with automatic GPU selection and software encoding. Real-camera footage, long edits, manual player compatibility and performance targets still need broader validation.
 
 The full product roadmap remains the supplied build spec, implemented in milestone order. Decisions and deviations are recorded in `docs/DECISIONS.md` and `docs/SKIPPED.md`.
+
+## Audio and captions (0.6.1)
+
+Select an audio/video clip to adjust master gain, solo, fades and ducking in the inspector. Noise reduction and loudness normalization apply during export. **Detect beat markers** adds onset candidates. **Record voiceover** captures your microphone at the playhead; stop recording to add it as an audio clip. Export supports WAV, MP3 and AAC in addition to MP4.
+
+Click **Captions** to generate offline English captions from the audible timeline, an I/O range, or the selected clip. Adjust character/word limits and choose a static style and position. The list supports text edits, timing changes, merge/split, delete, find/replace, and restyle all. SRT import/export is available in the same dialog. Captions are ordinary text clips and burn into MP4 output. Generate adds a new track; existing captions stay available for comparison or undo.
+
+M7 is still in progress: karaoke/word-pop/box-highlight presets, adjustable maximum lines, larger-model selection in the UI, and filler-word removal are not available yet. Imported and manually edited caption text has no word timings.

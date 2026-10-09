@@ -47,6 +47,7 @@ export function addClipKeyframe(clip: Clip, time: number): void {
 }
 // Keep keys outside the trimmed range to preserve the exact interpolation curve.
 export function shiftAnimation(clip: Clip, delta: number): void {
+  if (clip.type === 'text' && clip.caption) for (const word of clip.caption.words) { word.start -= delta; word.end -= delta; }
   const properties = [...Object.values(clip.transform), clip.opacity, ...(clip.type === 'media' ? [clip.volume] : [])];
   for (const property of properties) for (const key of property.keyframes) key.time -= delta;
 }

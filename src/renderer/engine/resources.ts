@@ -1,3 +1,4 @@
+import { audible, duckGain } from './audio';
 import { evaluate } from './keyframes';
 import { fontString } from './text';
 import type { Clip, Project } from '../../shared/types';
@@ -40,7 +41,7 @@ export class MediaResources {
         const element = entry.element; if (!(element instanceof HTMLVideoElement)) return;
         const active = activeAt(clip, time), desired = sourceTime(clip, Math.max(clip.start, time)) / 1e6;
         const incoming = clip.transitionIn?.duration ?? 0, outgoing = track.clips[track.clips.indexOf(clip) + 1]?.transitionIn?.duration ?? 0;
-        const gain = clip.muted || track.muted || !active ? 0 : evaluate(clip.volume, time - clip.start) *
+        const gain = clip.muted || !audible(project, track) || !active ? 0 : evaluate(clip.volume, time - clip.start) * (project.masterVolume ?? 1) * duckGain(project, track, time) *
           (incoming ? Math.min(1, Math.max(0, (time - clip.start) / incoming)) : 1) *
           (outgoing ? Math.min(1, Math.max(0, (clip.start + clip.duration - time) / outgoing)) : 1) *
           (clip.fadeIn ? Math.min(1, (time - clip.start) / clip.fadeIn) : 1) *

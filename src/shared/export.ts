@@ -3,6 +3,7 @@ import type { MediaView } from './api';
 export type Encoder = 'libx264' | 'h264_nvenc' | 'h264_qsv' | 'h264_amf';
 export type Quality = 'low' | 'medium' | 'high' | 'maximum' | 'custom';
 export interface ExportRequest {
+  format?: 'mp4' | 'mp3' | 'wav' | 'aac';
   projectId: string;
   resolution: 480 | 720 | 1080;
   fps: 24 | 25 | 30 | 50 | 60;

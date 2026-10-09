@@ -8,6 +8,7 @@ import { MediaLibrary } from './services/mediaLibrary';
 import { projectHandlers } from './ipc/projects';
 import { serveMedia } from './services/mediaProtocol';
 import { ExportRunner } from './services/exportRunner';
+import { CaptionRunner } from './services/captionRunner';
 
 app.setName('OpenCut');
 protocol.registerSchemesAsPrivileged([{ scheme: 'opencut-media', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true, corsEnabled: true } }]);
@@ -35,9 +36,12 @@ app.whenReady().then(() => {
   const store = new ProjectStore(app.getPath('userData'));
   const library = new MediaLibrary(store);
   projectHandlers(store, library, trusted);
+  new CaptionRunner(store, toolsRoot(), trusted);
   new ExportRunner(store, library, join(__dirname, '../preload/index.js'), join(__dirname, '../renderer/index.html'), trusted);
   protocol.handle('opencut-media', request => serveMedia(request, library.files));
-  session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
+  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => callback(
+    contents === window?.webContents && permission === 'media' && 'mediaTypes' in details && details.mediaTypes?.length === 1 && details.mediaTypes[0] === 'audio'
+  ));
   const devOrigin = !app.isPackaged && process.env.ELECTRON_RENDERER_URL ? new URL(process.env.ELECTRON_RENDERER_URL).origin : null;
   const rendererURL = pathToFileURL(join(__dirname, '../renderer/index.html')).href;
   session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
@@ -47,12 +51,13 @@ app.whenReady().then(() => {
     callback({ cancel: !local && !development && details.url !== rendererURL });
   });
   ipcMain.handle('tools:check', async event => { trusted(event); return checkTools(toolsRoot()); });
-  ipcMain.handle('tools:setup', async event => {
+  ipcMain.handle('tools:setup', async (event, small?: boolean) => {
     trusted(event);
+    if (small !== undefined && typeof small !== 'boolean') throw new Error('Invalid setup request');
     if (settingUp) throw new Error('Setup is already running');
     settingUp = true;
     try {
-      await setupTools(toolsRoot(), progress => { if (!event.sender.isDestroyed()) event.sender.send('tools:progress', progress); });
+      await setupTools(toolsRoot(), progress => { if (!event.sender.isDestroyed()) event.sender.send('tools:progress', progress); }, small);
       return await checkTools(toolsRoot());
     } finally { settingUp = false; }
   });

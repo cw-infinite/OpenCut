@@ -1,6 +1,7 @@
 export type Us = number;
 
 export interface Project {
+  masterVolume?: number;
   id: string; name: string; version: 1;
   settings: { width: number; height: number; fps: number; sampleRate: 48000 };
   media: Record<string, MediaAsset>;
@@ -19,6 +20,8 @@ export interface MediaAsset {
 }
 
 export interface Track {
+  solo?: boolean;
+  ducking?: { speechTrackIds: string[]; gain: number; attack: Us; release: Us };
   id: string; kind: 'video' | 'audio' | 'text';   // 'video' tracks hold video/image/sticker clips
   name: string; locked: boolean; hidden: boolean; muted: boolean;
   clips: Clip[];                    // non-overlapping within a track, sorted by start
@@ -37,6 +40,7 @@ export interface ClipBase {
 }
 
 export interface MediaClip extends ClipBase {
+  audioEffects?: { noiseReduction?: boolean; normalize?: boolean };
   type: 'media'; mediaId: string;
   sourceIn: Us; sourceOut: Us;      // trim window in source time
   speed: number;                    // 0.1..100, constant (curve in P1)
@@ -56,7 +60,7 @@ export interface TextClip extends ClipBase {
   content: string;                  // plain text; \n allowed
   style: TextStyle;
   animIn?: TextAnimation; animOut?: TextAnimation; animLoop?: TextAnimation;
-  caption?: { words: { text: string; start: Us; end: Us }[] };  // present for auto-caption clips
+  caption?: { words: { text: string; start: Us; end: Us }[]; preset?: 'plain' | 'karaoke' | 'wordPop' | 'box' | 'outline' };  // clip-relative word times; empty for imported/edited captions
 }
 
 export interface Transform {

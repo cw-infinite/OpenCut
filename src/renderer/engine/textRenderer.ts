@@ -3,6 +3,7 @@ import { evaluate } from './keyframes';
 import { animationAt } from './textAnimations';
 import { fontString } from './text';
 import { constant } from './timeline';
+import { captionWordState } from './captionStyle';
 
 interface Glyph { char: string; x: number; y: number; width: number; line: number; word: number; index: number }
 const layouts = new WeakMap<TextClip, Map<string, { glyphs: Glyph[]; width: number; height: number }>>();
@@ -12,36 +13,37 @@ function layout(ctx: CanvasRenderingContext2D, clip: TextClip, scale: number): {
   const cached = cache.get(key); if (cached) return cached;
   const style = clip.style, spacing = style.letterSpacing * scale, max = ctx.canvas.width * style.maxWidthFraction;
   const measure = (text: string) => Array.from(text).reduce((sum, char) => sum + ctx.measureText(char).width + spacing, 0);
-  const lines: string[] = [];
+  const lines: { char: string; word: number }[][] = []; let wordIndex = 0;
   for (const paragraph of clip.content.split('\n')) {
-    let line = '';
+    let line: { char: string; word: number }[] = [];
     for (const word of paragraph.split(/(\s+)/)) {
-      if (line && measure(line + word) > max) { lines.push(line.trimEnd()); line = ''; }
+      if (!word) continue;
+      if (line.length && measure(line.map(item => item.char).join('') + word) > max) { while (line.at(-1) && !line.at(-1)!.char.trim()) line.pop(); lines.push(line); line = []; }
       for (const char of Array.from(word)) {
-        if (line && measure(line + char) > max) { lines.push(line); line = ''; }
-        if (line || char.trim()) line += char;
+        if (line.length && measure(line.map(item => item.char).join('') + char) > max) { lines.push(line); line = []; }
+        if (line.length || char.trim()) line.push({ char, word: word.trim() ? wordIndex : Math.max(0, wordIndex - 1) });
       }
+      if (word.trim()) wordIndex++;
     }
     lines.push(line);
   }
-  const widths = lines.map(measure), width = Math.max(0, ...widths), lineHeight = style.fontSize * scale * style.lineHeight;
-  const glyphs: Glyph[] = []; let word = 0;
+  const widths = lines.map(line => measure(line.map(item => item.char).join(''))), width = Math.max(0, ...widths), lineHeight = style.fontSize * scale * style.lineHeight;
+  const glyphs: Glyph[] = [];
   lines.forEach((line, index) => {
     let x = style.align === 'left' ? -width / 2 : style.align === 'right' ? width / 2 - widths[index] : -widths[index] / 2;
     const y = (index - (lines.length - 1) / 2) * lineHeight;
-    for (const char of Array.from(line)) {
+    for (const { char, word } of line) {
       const size = ctx.measureText(char).width;
       glyphs.push({ char, x, y, width: size, line: index, word, index: glyphs.length });
-      x += size + spacing; if (/\s/.test(char)) word++;
+      x += size + spacing;
     }
-    word++;
   });
   const result = { glyphs, width, height: Math.max(lineHeight, lines.length * lineHeight) }; cache.set(key, result); return result;
 }
 const titleLayers = new WeakMap<TextClip, Map<string, HTMLCanvasElement>>();
 export function drawText(ctx: CanvasRenderingContext2D, clip: TextClip, time: number): void {
   const animations = [clip.animIn, clip.animOut, clip.animLoop];
-  if (animations.some(animation => animation && (animation.granularity !== 'whole' || ['typewriter', 'wipe'].includes(animation.preset)))) {
+  if ((clip.caption?.words.length && ['karaoke', 'wordPop', 'box'].includes(clip.caption.preset ?? '')) || animations.some(animation => animation && (animation.granularity !== 'whole' || ['typewriter', 'wipe'].includes(animation.preset)))) {
     drawTextBase(ctx, clip, time); return;
   }
   const key = `${ctx.canvas.width}:${ctx.canvas.height}`, cache = titleLayers.get(clip) ?? new Map<string, HTMLCanvasElement>(); titleLayers.set(clip, cache);
@@ -102,8 +104,26 @@ function drawTextBase(ctx: CanvasRenderingContext2D, clip: TextClip, time: numbe
     });
     result = { count: map.size, byGlyph }; groupCache.set(granularity, result); return result;
   };
+  if (clip.caption?.preset === 'box') {
+    const boxes = new Map<string, Glyph[]>();
+    for (const glyph of glyphs) if (glyph.char.trim() && captionWordState(clip, glyph.word, local).active) {
+      const id = `${glyph.word}:${glyph.line}`, items = boxes.get(id) ?? []; items.push(glyph); boxes.set(id, items);
+    }
+    ctx.save(); ctx.fillStyle = '#baff72';
+    for (const items of boxes.values()) {
+      const left = Math.min(...items.map(item => item.x)), right = Math.max(...items.map(item => item.x + item.width));
+      ctx.beginPath(); ctx.roundRect(left - 5 * s, items[0].y - style.fontSize * s * .6, right - left + 10 * s, style.fontSize * s * 1.2, 5 * s); ctx.fill();
+    }
+    ctx.restore();
+  }
   for (const glyph of glyphs) {
     ctx.save(); let visible = true, blur = baseBlur, hue = baseHue;
+    const caption = captionWordState(clip, glyph.word, local);
+    visible = caption.visible;
+    if (caption.scale !== 1) {
+      const group = groups('word').byGlyph.get(glyph.index)!.group, cx = (group.left + group.right) / 2;
+      ctx.translate(cx, glyph.y); ctx.scale(caption.scale, caption.scale); ctx.translate(-cx, -glyph.y);
+    }
     for (const [animation, phase] of [[clip.animIn, 'in'], [clip.animOut, 'out'], [clip.animLoop, 'loop']] as const) {
       if (!animation) continue;
       const all = groups(animation.granularity), entry = all.byGlyph.get(glyph.index)!, group = entry.group;
@@ -118,10 +138,11 @@ function drawTextBase(ctx: CanvasRenderingContext2D, clip: TextClip, time: numbe
       if (animation.preset === 'wipe') { ctx.beginPath(); ctx.rect(left, top, (right - left) * motion.reveal, bottom - top); ctx.clip(); }
     }
     if (visible) {
-      ctx.filter = blur || hue ? `blur(${blur * s}px) hue-rotate(${hue}deg)` : 'none'; ctx.fillStyle = fill;
+      ctx.filter = blur || hue ? `blur(${blur * s}px) hue-rotate(${hue}deg)` : 'none';
+      ctx.fillStyle = caption.active && clip.caption?.preset === 'karaoke' ? '#baff72' : caption.active && clip.caption?.preset === 'box' ? '#14171d' : fill;
       if (style.shadow) { ctx.shadowColor = style.shadow.color; ctx.shadowBlur = style.shadow.blur * s; ctx.shadowOffsetX = style.shadow.offsetX * s; ctx.shadowOffsetY = style.shadow.offsetY * s; }
       if (style.glow) { ctx.save(); ctx.shadowColor = style.glow.color; ctx.shadowBlur = style.glow.blur * s; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; ctx.fillText(glyph.char, glyph.x, glyph.y); ctx.restore(); }
-      if (style.stroke) { ctx.strokeStyle = style.stroke.color; ctx.lineWidth = style.stroke.width * s; ctx.strokeText(glyph.char, glyph.x, glyph.y); }
+      if (style.stroke && !(caption.active && clip.caption?.preset === 'box')) { ctx.strokeStyle = style.stroke.color; ctx.lineWidth = style.stroke.width * s; ctx.strokeText(glyph.char, glyph.x, glyph.y); }
       ctx.fillText(glyph.char, glyph.x, glyph.y);
     }
     ctx.restore();

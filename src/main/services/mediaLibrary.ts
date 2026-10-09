@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { parseWaveformCache } from './waveformCache';
-import { stat, readFile, readdir } from 'node:fs/promises';
+import { stat, readFile, readdir, mkdir, writeFile } from 'node:fs/promises';
 import { basename, isAbsolute, join } from 'node:path';
 import { probe } from './mediaProbe';
-import { prepareMedia } from './ffmpeg';
+import { prepareMedia, ffmpegJob } from './ffmpeg';
 import type { ProjectStore } from './projectStore';
 import type { ImportProgress, MediaView } from '../../shared/api';
 import { deriveMedia } from './derivedMedia';
@@ -46,6 +46,20 @@ export class MediaLibrary {
     } finally { this.busy.delete(projectId); }
   }
   assertIdle(projectId: string): void { if (this.busy.has(projectId)) throw new Error('Wait for media import to finish first'); }
+  async record(projectId: string, bytes: ArrayBuffer) {
+    this.assertIdle(projectId); this.busy.add(projectId);
+    try {
+      if (!(bytes instanceof ArrayBuffer) || bytes.byteLength < 4 || bytes.byteLength > 64 * 1024 * 1024 || new DataView(bytes).getUint32(0) !== 0x1a45dfa3) throw new Error('Invalid or oversized audio recording');
+      const { project } = await this.store.readStable(projectId), id = randomUUID(), folder = this.store.folder(projectId);
+      await mkdir(join(folder, 'derived'), { recursive: true });
+      const path = join(folder, 'derived', `voiceover-${id}.webm`); await writeFile(path, Buffer.from(bytes));
+      const wav = join(folder, 'derived', `voiceover-${id}.wav`);
+      await ffmpegJob(['-i', path, '-vn', '-c:a', 'pcm_s16le', '-ar', '48000', wav], 1, () => {});
+      const asset = await probe(wav, id); if (asset.kind !== 'audio') throw new Error('Expected an audio-only recording');
+      await prepareMedia(asset, folder, project.settings.fps, () => {});
+      await this.store.update(projectId, current => { current.media[id] = asset; }); return asset;
+    } finally { this.busy.delete(projectId); }
+  }
   async derive(projectId: string, clipId: string, operation: 'freeze' | 'reverse', time: number, progress: (update: ImportProgress) => void) {
     this.assertIdle(projectId); this.busy.add(projectId);
     try {

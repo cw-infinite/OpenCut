@@ -1,3 +1,4 @@
+import { audible, duckEnvelope } from './audio';
 import { volumeFilter } from './audioAutomation';
 import type { Project, MediaClip } from '../../shared/types';
 import type { Encoder, ExportPlan, ExportRequest, Quality } from '../../shared/export';
@@ -5,6 +6,7 @@ import { durationOf } from './timeline';
 import { frameTime } from './time';
 
 export function makeExportPlan(project: Project, request: ExportRequest): ExportPlan {
+  if (request.format !== undefined && !['mp4', 'mp3', 'wav', 'aac'].includes(request.format)) throw new Error('Invalid export format');
   if (![480, 720, 1080].includes(request.resolution) || ![24, 25, 30, 50, 60].includes(request.fps) ||
     !['low', 'medium', 'high', 'maximum', 'custom'].includes(request.quality) ||
     ![128, 192, 256, 320].includes(request.audioBitrate) || !['auto', 'software'].includes(request.encoderPreference) ||
@@ -17,6 +19,10 @@ export function makeExportPlan(project: Project, request: ExportRequest): Export
   if (Math.max(width, height) > 1920 || Math.min(width, height) < 2) throw new Error('This aspect ratio exceeds the 1080p export limits');
   return { ...request, width, height, start, end, totalFrames: Math.ceil((end - start) * request.fps / 1e6) };
 }
+export function audioExportArgs(format: 'mp3' | 'wav' | 'aac', bitrate: number, mix: string, output: string): string[] {
+  const codec = format === 'wav' ? ['-c:a', 'pcm_s16le', '-f', 'wav'] : format === 'mp3' ? ['-c:a', 'libmp3lame', '-b:a', `${bitrate}k`, '-f', 'mp3'] : ['-c:a', 'aac', '-b:a', `${bitrate}k`, '-f', 'adts'];
+  return ['-hide_banner', '-nostdin', '-y', '-i', mix, '-vn', ...codec, output];
+}
 export function atempoChain(speed: number): string[] {
   if (!Number.isFinite(speed) || speed < .1 || speed > 100) throw new Error('Invalid audio speed');
   const filters: string[] = [];
@@ -26,11 +32,11 @@ export function atempoChain(speed: number): string[] {
   return filters;
 }
 const seconds = (time: number) => (time / 1e6).toFixed(6);
-export function audioMixArgs(project: Project, plan: Pick<ExportPlan, 'start' | 'end' | 'totalFrames' | 'fps'>, output: string): string[] {
+export function audioMixArgs(project: Project, plan: Pick<ExportPlan, 'start' | 'end' | 'totalFrames' | 'fps' | 'format'>, output: string): string[] {
   const args: string[] = [], graph: string[] = [], labels: string[] = [];
-  const duration = seconds(frameTime(plan.totalFrames, plan.fps));
+  const duration = seconds(plan.format && plan.format !== 'mp4' ? plan.end - plan.start : frameTime(plan.totalFrames, plan.fps));
   for (const track of project.tracks) {
-    if (track.hidden || track.muted) continue;
+    if (!audible(project, track)) continue;
     for (const candidate of track.clips) {
       if (candidate.type !== 'media' || candidate.muted || !project.media[candidate.mediaId]?.hasAudio) continue;
       const clip: MediaClip = candidate;
@@ -39,7 +45,10 @@ export function audioMixArgs(project: Project, plan: Pick<ExportPlan, 'start' | 
       args.push('-ss', seconds(clip.sourceIn), '-t', seconds(clip.sourceOut - clip.sourceIn), '-i', project.media[clip.mediaId].path);
       const filters = ['aresample=48000', 'aformat=sample_fmts=fltp:channel_layouts=stereo', 'asetpts=PTS-STARTPTS'];
       if (clip.reverse) filters.push('areverse');
+      if (clip.audioEffects?.noiseReduction) filters.push('afftdn=nf=-25');
+      if (clip.audioEffects?.normalize) filters.push('loudnorm=I=-16:TP=-1.5:LRA=11', 'aresample=48000');
       filters.push(...atempoChain(clip.speed), volumeFilter(clip.volume));
+      if (track.ducking) filters.push(volumeFilter(duckEnvelope(project, track, clip.start)));
       const incoming = clip.transitionIn?.duration ?? 0, outgoing = track.clips[track.clips.indexOf(clip) + 1]?.transitionIn?.duration ?? 0;
       if (incoming) filters.push(`afade=t=in:st=0:d=${seconds(incoming)}`);
       if (outgoing) filters.push(`afade=t=out:st=${seconds(clip.duration - outgoing)}:d=${seconds(outgoing)}`);
@@ -53,7 +62,7 @@ export function audioMixArgs(project: Project, plan: Pick<ExportPlan, 'start' | 
     }
   }
   if (!labels.length) return ['-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-t', duration, '-c:a', 'pcm_s16le', output];
-  graph.push(`${labels.join('')}amix=inputs=${labels.length}:normalize=0:duration=longest,alimiter=limit=0.95:level=false:latency=true,apad,atrim=duration=${duration}[mix]`);
+  graph.push(`${labels.join('')}amix=inputs=${labels.length}:normalize=0:duration=longest,${project.masterVolume !== undefined ? `volume=${project.masterVolume},` : ''}alimiter=limit=0.95:level=false:latency=true,apad,atrim=duration=${duration}[mix]`);
   return [...args, '-filter_complex', graph.join(';'), '-map', '[mix]', '-ar', '48000', '-ac', '2', '-c:a', 'pcm_s16le', output];
 }
 export function qualityArgs(encoder: Encoder, quality: Quality, bitrateMbps: number): string[] {

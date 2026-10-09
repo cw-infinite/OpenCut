@@ -1,7 +1,19 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron';
 import type { OpenCutApi, SetupProgress, ImportProgress } from '../shared/api';
 import type { ExportProgress } from '../shared/export';
+import type { CaptionProgress } from '../shared/captions';
 const api: OpenCutApi = {
+  captions: {
+    models: () => ipcRenderer.invoke('captions:models'),
+    generate: request => ipcRenderer.invoke('captions:generate', request),
+    cancel: () => ipcRenderer.invoke('captions:cancel'),
+    importSrt: () => ipcRenderer.invoke('captions:import'),
+    onProgress: callback => {
+      const listener = (_event: Electron.IpcRendererEvent, progress: CaptionProgress) => callback(progress);
+      ipcRenderer.on('captions:progress', listener);
+      return () => ipcRenderer.removeListener('captions:progress', listener);
+    }
+  },
   fonts: () => ipcRenderer.invoke('fonts:list'),
   export: {
     start: request => ipcRenderer.invoke('export:start', request),
@@ -29,6 +41,8 @@ const api: OpenCutApi = {
     remove: id => ipcRenderer.invoke('projects:remove', id)
   },
   media: {
+    record: (projectId, bytes) => ipcRenderer.invoke('media:record', projectId, bytes),
+    beats: (projectId, clipId) => ipcRenderer.invoke('media:beats', projectId, clipId),
     derive: (id, clipId, operation, time) => ipcRenderer.invoke('media:derive', id, clipId, operation, time),
     pick: id => ipcRenderer.invoke('media:pick', id),
     drop: (id, files) => ipcRenderer.invoke('media:drop', id, files.map(file => webUtils.getPathForFile(file))),
@@ -41,7 +55,7 @@ const api: OpenCutApi = {
     }
   },
   checkTools: () => ipcRenderer.invoke('tools:check'),
-  setupTools: () => ipcRenderer.invoke('tools:setup'),
+  setupTools: small => ipcRenderer.invoke('tools:setup', small),
   onSetupProgress: callback => {
     const listener = (_event: Electron.IpcRendererEvent, progress: SetupProgress) => callback(progress);
     ipcRenderer.on('tools:progress', listener);

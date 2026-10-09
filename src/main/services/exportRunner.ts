@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import type { ExportProgress, ExportRequest, ExportWork, Encoder } from '../../shared/export';
 import type { ProjectStore } from './projectStore';
 import type { MediaLibrary } from './mediaLibrary';
-import { makeExportPlan, audioMixArgs, videoExportArgs } from '../../renderer/engine/ffmpegArgs';
+import { makeExportPlan, audioMixArgs, audioExportArgs, videoExportArgs } from '../../renderer/engine/ffmpegArgs';
 import { exportSrt } from '../../renderer/engine/captions';
 import { validateTimeline } from '../../renderer/engine/timeline';
 import { selectEncoder } from './encoders';
@@ -64,12 +64,13 @@ export class ExportRunner {
     if (this.job) throw new Error('An export is already running');
     const { project } = await this.store.readStable(request.projectId); validateTimeline(project);
     const plan = makeExportPlan(project, request);
-    const selected = await dialog.showSaveDialog({ title: 'Export your video', defaultPath: join(app.getPath('videos'), `${project.name.replace(/[<>:"/\\|?*]/g, '_')}-${request.resolution}p.mp4`), filters: [{ name: 'MP4 video', extensions: ['mp4'] }] });
+    const format = request.format ?? 'mp4';
+    const selected = await dialog.showSaveDialog({ title: 'Export your edit', defaultPath: join(app.getPath('videos'), `${project.name.replace(/[<>:"/\\|?*]/g, '_')}.${format}`), filters: [{ name: format.toUpperCase(), extensions: [format] }] });
     if (selected.canceled || !selected.filePath) return null;
     if (this.job) throw new Error('An export is already running');
-    const id = randomUUID(), output = selected.filePath.endsWith('.mp4') ? selected.filePath : selected.filePath + '.mp4';
+    const id = randomUUID(), output = selected.filePath.toLowerCase().endsWith('.' + format) ? selected.filePath : selected.filePath + '.' + format;
     const views = await this.media.views(project.id), folder = await mkdtemp(join(app.getPath('temp'), 'opencut-export-'));
-    const job: Job = { work: { id, project, plan, views }, owner, output, partial: join(dirname(output), `.${basename(output)}.${id}.partial.mp4`), folder,
+    const job: Job = { work: { id, project, plan, views }, owner, output, partial: join(dirname(output), `.${basename(output)}.${id}.partial.${format}`), folder,
       frame: 0, writing: false, canceled: false, started: Date.now(), lastReport: 0 };
     this.job = job;
     void this.run(job);
@@ -100,6 +101,11 @@ export class ExportRunner {
       this.report(job, 'audio');
       const mix = join(job.folder, 'mix.wav');
       await this.process(job, ['-hide_banner', '-nostdin', '-y', ...audioMixArgs(job.work.project, job.work.plan, mix)]);
+      if (job.work.plan.format && job.work.plan.format !== 'mp4') {
+        this.report(job, 'finalizing');
+        await this.process(job, audioExportArgs(job.work.plan.format, job.work.plan.audioBitrate, mix, job.partial));
+        job.frame = job.work.plan.totalFrames;
+      } else {
       job.encoder = await selectEncoder(job.work.plan, () => job.canceled);
       if (job.canceled) throw new Error('Export canceled');
       try { await this.encode(job, mix); }
@@ -108,6 +114,7 @@ export class ExportRunner {
         await this.stopPipeline(job);
         job.encoder = 'libx264'; job.failure = undefined; job.frame = 0; job.writing = false;
         await this.encode(job, mix);
+      }
       }
       if (job.frame !== job.work.plan.totalFrames || job.canceled) throw new Error('Export did not complete');
       await rename(job.partial, job.output);

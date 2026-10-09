@@ -4,7 +4,7 @@ Nothing from the required product scope has been intentionally dropped. Implemen
 
 The foundation includes desktop/tool setup (M0), projects/import (M1), multi-track editing/preview (M2), and MP4 export (M3).
 
-M4 and M5 are implemented: transform/volume keyframes, speed, transitions, reverse/freeze, text styling and in/out/loop animations. Remaining milestones: advanced audio (M6), auto-captions and editing (M7), effects (M8), and batch export/recording/polish (M9). M10 stays optional. The SRT exporter requires caption clips, which the UI will create in M7.
+M4 and M5 are implemented: transform/volume keyframes, speed, transitions, reverse/freeze, text styling and in/out/loop animations. M6 advanced audio is implemented and verified. M7 now generates offline English captions and supports list editing, static styles, position controls and SRT import/export. Remaining M7 work: animated word presets, configurable maximum lines, model selection/setup UI, filler removal, and full acceptance on long speech and caption MP4 export. M8 effects and M9 batch export/recording/polish remain. M10 stays optional.
 
 Remaining acceptance coverage: real phone/VFR/rotated and long-media corpus, manual listening/A-V inspection in VLC/Windows Media Player, hardware performance targets, and one-hour drift/memory measurements. Automated synthetic tests do not substitute for these checks.
 

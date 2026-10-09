@@ -17,6 +17,8 @@ export function validateTextStyle(style: TextStyle): void {
   if (style.gradient) { color(style.gradient.from); color(style.gradient.to); numeric(style.gradient.angle, -360, 360); }
 }
 export function validateText(clip: TextClip): void {
+  if (clip.caption && (!Array.isArray(clip.caption.words) || clip.caption.words.some(word => typeof word.text !== 'string' || !Number.isSafeInteger(word.start) || !Number.isSafeInteger(word.end) || word.end <= word.start))) throw new Error('Invalid caption word timing');
+  if (clip.caption?.preset && !['plain', 'karaoke', 'wordPop', 'box', 'outline'].includes(clip.caption.preset)) throw new Error('Invalid caption preset');
   if (typeof clip.content !== 'string' || clip.content.length > 20000) throw new Error('Text must be at most 20,000 characters');
   validateTextStyle(clip.style);
   for (const key of ['animIn', 'animOut', 'animLoop'] as const) {

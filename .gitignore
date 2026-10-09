@@ -8,3 +8,5 @@ playwright-report/
 resources/tools/*
 !resources/tools/.gitkeep
 *.log
+
+dist-m6/
