@@ -3,6 +3,13 @@ import type { OpenCutApi, SetupProgress, ImportProgress } from '../shared/api';
 import type { ExportProgress } from '../shared/export';
 import type { CaptionProgress } from '../shared/captions';
 const api: OpenCutApi = {
+  creative: {
+    status: () => ipcRenderer.invoke('creative:status'),
+    setup: kind => ipcRenderer.invoke('creative:setup', kind),
+    generate: request => ipcRenderer.invoke('creative:generate', request),
+    cancel: () => ipcRenderer.invoke('creative:cancel'),
+    onProgress: callback => { const listener = (_event: Electron.IpcRendererEvent, progress: { stage: string; percent: number | null }) => callback(progress); ipcRenderer.on('creative:progress', listener); return () => ipcRenderer.removeListener('creative:progress', listener); }
+  },
   capture: { sources: () => ipcRenderer.invoke('capture:sources'), authorize: (mode, source, audio) => ipcRenderer.invoke('capture:authorize', mode, source, audio) },
   captions: {
     models: () => ipcRenderer.invoke('captions:models'),

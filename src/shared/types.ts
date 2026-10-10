@@ -11,6 +11,7 @@ export interface Project {
 }
 
 export interface MediaAsset {
+  hasAlpha?: boolean;
   id: string; path: string;         // absolute path of original
   kind: 'video' | 'audio' | 'image';
   duration: Us; width?: number; height?: number; fps?: number;

@@ -5,6 +5,7 @@ import { ffmpegJob, prepareMedia } from './ffmpeg';
 import { probe } from './mediaProbe';
 
 export async function deriveMedia(asset: MediaAsset, clip: MediaClip, operation: 'freeze' | 'reverse' | 'stabilize', time: number, id: string, folder: string, fps: number, progress: (stage: string, percent: number) => void): Promise<MediaAsset> {
+  if (asset.hasAlpha) throw new Error('Reverse, freeze and stabilization currently require the original media before background removal.');
   const derived = join(folder, 'derived'); await mkdir(derived, { recursive: true });
   if (operation === 'stabilize') {
     if (asset.kind !== 'video') throw new Error('Select a video clip to stabilize');

@@ -1,3 +1,4 @@
+import { CreativeDialog } from './CreativeDialog';
 import { useState } from 'react';
 import type { MediaClip } from '../../shared/types';
 import { useEditor } from '../state/editor';
@@ -7,6 +8,7 @@ import { evaluate } from '../engine/keyframes';
 
 export function DerivedActions({ clip }: { clip: MediaClip }): JSX.Element {
   const state = useEditor(), [busy, setBusy] = useState(false), progress = useProjects(state => state.progress);
+  const [backgroundOpen, setBackgroundOpen] = useState(false);
   const asset = state.project!.media[clip.mediaId];
   const derive = async (operation: 'reverse' | 'freeze' | 'stabilize') => {
     const snapshot = useEditor.getState(), project = snapshot.project!;
@@ -35,9 +37,10 @@ export function DerivedActions({ clip }: { clip: MediaClip }): JSX.Element {
     } catch (error) { useEditor.setState({ error: String(error) }); }
     finally { setBusy(false); }
   };
-  return <section><div className="inspector-buttons">
-    <button className="secondary" disabled={busy || asset.kind === 'image'} onClick={() => void derive('reverse')}>Reverse clip</button>
-    <button className="secondary" disabled={busy || asset.kind !== 'video' || state.playhead < clip.start || state.playhead >= clip.start + clip.duration} onClick={() => void derive('freeze')}>Freeze frame</button>
+  return <section>{backgroundOpen && <CreativeDialog clip={clip} onClose={() => setBackgroundOpen(false)}/>}<div className="inspector-buttons">
+    <button className="secondary" disabled={busy || !!asset.hasAlpha || asset.kind === 'image'} onClick={() => void derive('reverse')}>Reverse clip</button>
+    <button className="secondary" disabled={busy || !!asset.hasAlpha || asset.kind !== 'video' || state.playhead < clip.start || state.playhead >= clip.start + clip.duration} onClick={() => void derive('freeze')}>Freeze frame</button>
     <button className="secondary" disabled={busy || asset.kind !== 'video'} onClick={() => void derive('stabilize')}>Stabilize video</button>
+    <button className="secondary" disabled={busy || !!asset.hasAlpha || asset.kind === 'audio'} onClick={() => setBackgroundOpen(true)}>Remove background</button>
   </div><p className="subtle">{busy ? `${progress?.stage ?? 'Preparing media'} · ${progress?.percent ?? 0}%` : 'Freeze adds a 5-second still. Reverse and stabilization create local copies; Undo restores the clip. Stabilization reduces camera shake and mirrors exposed edges; review the result for moving subjects.'}</p></section>;
 }

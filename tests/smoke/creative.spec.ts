@@ -1,0 +1,68 @@
+import { test, expect, _electron as electron } from '@playwright/test';
+import { resolve, join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { mkdir, readFile } from 'node:fs/promises';
+import { makeMediaClip, makeTrack } from '../../src/renderer/engine/timeline';
+import { runProcess } from '../../src/main/services/process';
+import { ffmpegPath } from '../../src/main/services/tools';
+
+test('local portrait video cutout, cancel, undo, speech placement, persistence and transparent MP4 composition', async () => {
+  test.setTimeout(180000);
+  const root = resolve('.test-data/creative-ui-' + randomUUID()); await mkdir(root, { recursive: true });
+  const video = join(root, 'portrait.mp4'), green = join(root, 'green.png');
+  await runProcess(ffmpegPath, ['-v', 'error', '-y', '-loop', '1', '-i', resolve('tests/fixtures/portrait.png'), '-t', '1', '-r', '24', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', video]);
+  await runProcess(ffmpegPath, ['-v', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=0x00ff00:s=512x512', '-frames:v', '1', green]);
+  const app = await electron.launch({ executablePath: process.env.OPENCUT_EXECUTABLE, args: process.env.OPENCUT_EXECUTABLE ? [] : ['.'], env: { ...process.env, OPENCUT_TEST_DATA: join(root, 'app') } });
+  try {
+    const page = await app.firstWindow();
+    await app.evaluate(({ dialog }, paths) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: paths }); }, [green, video]);
+    const project = await page.evaluate(async () => { const p = await window.opencut.projects.create('Creative acceptance', { width: 512, height: 512, fps: 24, sampleRate: 48000 }); return window.opencut.media.pick(p.id); });
+    const bg = makeTrack('bg', 'video', 'Backdrop'), fg = makeTrack('fg', 'video', 'Portrait');
+    bg.clips = [makeMediaClip('background', Object.values(project.media).find(a => a.kind === 'image')!, bg.id, 0)];
+    fg.clips = [makeMediaClip('portrait', Object.values(project.media).find(a => a.kind === 'video')!, fg.id, 0)];
+    project.tracks = [bg, fg];
+    await page.evaluate(p => window.opencut.projects.saveEdit(p), project);
+    await page.getByRole('button', { name: 'Open projects', exact: true }).click(); await page.getByRole('button', { name: 'Open timeline', exact: true }).click();
+    await page.locator('[data-clip-id="portrait"]').click({ position: { x: 20, y: 30 } });
+    await page.getByRole('button', { name: 'Remove background', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Remove background' });
+    await dialog.getByRole('button', { name: 'Remove background', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Cancel processing' }).click();
+    await expect(dialog.getByRole('alert')).toContainText(/cancel|abort/i, { timeout: 30000 });
+    await dialog.getByRole('button', { name: 'Remove background', exact: true }).click();
+    await expect(dialog).toHaveCount(0, { timeout: 60000 });
+    const greenFraction = () => page.locator('.canvas-surface canvas').evaluate((canvas: HTMLCanvasElement) => {
+      const pixels = canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height).data; let green = 0;
+      for (let i = 0; i < pixels.length; i += 4) if (pixels[i] < 40 && pixels[i + 1] > 180 && pixels[i + 2] < 40) green++;
+      return green / (pixels.length / 4);
+    });
+    await expect.poll(greenFraction).toBeGreaterThan(.15);
+    await page.keyboard.press('Control+z'); await expect.poll(greenFraction).toBeLessThan(.02);
+    await page.keyboard.press('Control+Shift+z'); await expect.poll(greenFraction).toBeGreaterThan(.15);
+    await page.getByRole('button', { name: 'Text to speech', exact: true }).click();
+    await page.getByLabel('Speech text').fill('Hello from Open Cut. This voice stays on your computer.');
+    await page.getByRole('button', { name: 'Generate speech', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0, { timeout: 30000 });
+    await expect(page.locator('.timeline-clip')).toHaveCount(3);
+    await page.keyboard.press('Control+z'); await expect(page.locator('.timeline-clip')).toHaveCount(2);
+    await page.keyboard.press('Control+Shift+z'); await expect(page.locator('.timeline-clip')).toHaveCount(3);
+    await page.screenshot({ path: 'test-results/creative-cutout.png', fullPage: true });
+    await page.getByRole('button', { name: 'Source browser', exact: true }).click();
+    const saved = await page.evaluate(async id => (await window.opencut.projects.open(id)).project, project.id);
+    const cutout = saved.tracks[1].clips[0]; expect(cutout.type).toBe('media');
+    if (cutout.type === 'media') expect(saved.media[cutout.mediaId].hasAlpha).toBe(true);
+    expect(saved.tracks.flatMap(t => t.clips).filter(c => c.type === 'media' && saved.media[c.mediaId].kind === 'audio')).toHaveLength(1);
+    await page.getByRole('button', { name: 'Open timeline', exact: true }).click(); await expect.poll(greenFraction).toBeGreaterThan(.15);
+    const output = join(root, 'composite.mp4');
+    await app.evaluate(({ dialog }, path) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath: path }); }, output);
+    await page.getByRole('button', { name: 'Export', exact: true }).click();
+    await page.getByLabel('Resolution', { exact: true }).selectOption('480'); await page.getByLabel('Encoder', { exact: true }).selectOption('software');
+    await page.getByRole('button', { name: 'Export MP4', exact: true }).click(); await expect(page.getByText('Export complete', { exact: true })).toBeVisible({ timeout: 60000 });
+    const raw = join(root, 'composite.rgb');
+    await runProcess(ffmpegPath, ['-v', 'error', '-y', '-ss', '0.5', '-i', output, '-frames:v', '1', '-pix_fmt', 'rgb24', '-f', 'rawvideo', raw]);
+    const rgb = await readFile(raw); let count = 0;
+    for (let i = 0; i < rgb.length; i += 3) if (rgb[i] < 40 && rgb[i + 1] > 180 && rgb[i + 2] < 40) count++;
+    expect(count / (rgb.length / 3)).toBeGreaterThan(.15);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+  } finally { await app.evaluate(({ app }) => app.exit(0)).catch(() => {}); await app.close().catch(() => {}); }
+});

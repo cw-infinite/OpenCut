@@ -9,6 +9,7 @@ import { projectHandlers } from './ipc/projects';
 import { serveMedia } from './services/mediaProtocol';
 import { ExportRunner } from './services/exportRunner';
 import { CaptionRunner } from './services/captionRunner';
+import { creativeHandlers } from './services/creativeRunner';
 import { captureHandlers } from './services/capture';
 
 app.setName('OpenCut');
@@ -37,6 +38,7 @@ app.whenReady().then(() => {
   const store = new ProjectStore(app.getPath('userData'));
   const library = new MediaLibrary(store);
   projectHandlers(store, library, trusted);
+  creativeHandlers(library, join(toolsRoot(), 'creative'), trusted);
   new CaptionRunner(store, toolsRoot(), trusted);
   new ExportRunner(store, library, join(__dirname, '../preload/index.js'), join(__dirname, '../renderer/index.html'), trusted);
   protocol.handle('opencut-media', request => serveMedia(request, library.files));

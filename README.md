@@ -2,7 +2,15 @@
 
 A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
 
-**Current build: 0.10.3 — M0–M9 plus M10 transcript editing, video stabilization and motion tracking. Broader manual acceptance remains pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+**Current build: 0.10.4 — M0–M10 features implemented; broader manual acceptance remains pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+
+## New in 0.10.4
+
+- **Smart reframe:** choose the desired project canvas preset, select a video, then open **Motion tracking → Tracking purpose → Smart reframe to canvas**. Load the source frame, click a detailed subject feature, track, and apply. The clip fills the canvas and follows the subject using editable position keyframes, clamped to avoid exposed edges. This replaces the clip's crop/transform and is undoable. Tracking retains the existing 60-second and subject-visibility limits.
+- **Text to speech:** use **Text to speech** in the media panel. Enter up to 5,000 characters, choose 0.5–2× speed, and generate a local Piper US English voiceover at the playhead. Cancel processing or undo timeline insertion.
+- **Portrait background removal:** select a photo/video and use **Remove background** in the inspector. Local MODNet inference creates a transparent PNG/WebM copy; it composites over lower tracks in preview and MP4 export. Video source ranges are limited to 30 seconds. Review difficult hair, hands, occlusion and motion. Apply reverse/stabilization before removal; those preparation actions are unavailable on cutouts.
+
+The portable build includes these local tools. Source checkouts can run `npm run setup:creative`, or download missing tools explicitly from the feature dialog. Generation never contacts a service. Versions, hashes, licenses and sources are recorded in [local tool notices](docs/licenses/README.md).
 
 ## New in 0.10.3
 
@@ -28,7 +36,7 @@ Open **Captions → Edit video by transcript** after generating timed captions. 
 
 Select a video clip and choose **Stabilize video** in the inspector. Processing creates a local copy and preserves the clip timing, speed, direction and visual settings. Undo restores the original clip. Exposed edges are mirrored; review results for moving subjects. Originals remain intact.
 
-M10 remains in progress: background removal, smart reframe and local text-to-speech are still pending.
+The remaining M10 features were added in 0.10.4.
 
 ## Easier editing in 0.9.1
 
@@ -47,6 +55,7 @@ Requires Node.js 22.12+ and npm. From this directory:
 ```powershell
 npm install
 npm run setup:tools
+npm run setup:creative
 npm run dev
 ```
 

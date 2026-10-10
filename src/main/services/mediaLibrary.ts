@@ -8,7 +8,7 @@ import type { ProjectStore } from './projectStore';
 import type { ImportProgress, MediaView } from '../../shared/api';
 import { deriveMedia } from './derivedMedia';
 import { validateTimeline } from '../../renderer/engine/timeline';
-import type { Project } from '../../shared/types';
+import type { Project, MediaAsset } from '../../shared/types';
 
 export class MediaLibrary {
   readonly files = new Map<string, string>();
@@ -112,6 +112,14 @@ export class MediaLibrary {
         (stage, percent) => progress({ projectId, name: operation, stage, percent }));
       await this.store.update(projectId, current => { current.media[derived.id] = derived; });
       return derived;
+    } finally { this.busy.delete(projectId); }
+  }
+  async createGenerated(projectId: string, generate: (project: Project, folder: string) => Promise<MediaAsset>) {
+    this.assertIdle(projectId); this.busy.add(projectId);
+    try {
+      const { project } = await this.store.readStable(projectId);
+      const asset = await generate(project, this.store.folder(projectId));
+      await this.store.update(projectId, current => { current.media[asset.id] = asset; }); return asset;
     } finally { this.busy.delete(projectId); }
   }
   async views(projectId: string, snapshot?: Project): Promise<MediaView[]> {

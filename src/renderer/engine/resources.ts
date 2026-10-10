@@ -4,7 +4,7 @@ import { fontString } from './text';
 import type { Clip, Project } from '../../shared/types';
 import type { MediaView } from '../../shared/api';
 import { activeAt, sourceTime } from './compositor';
-interface Source { element: HTMLVideoElement | HTMLImageElement; ready: Promise<void>; gain?: GainNode }
+interface Source { url: string; element: HTMLVideoElement | HTMLImageElement; ready: Promise<void>; gain?: GainNode }
 export class MediaResources {
   private pool = new Map<string, Source>();
   private audio: AudioContext | null = null;
@@ -24,6 +24,7 @@ export class MediaResources {
       wanted.add(clip.id);
       const view = this.views.find(view => view.asset.id === clip.mediaId); if (!view) continue;
       let item = this.pool.get(clip.id);
+      if (item && item.url !== view.url) { this.release(item); this.pool.delete(clip.id); item = undefined; }
       if (!item) {
         const element = view.asset.kind === 'image' ? new Image() : document.createElement('video');
         element.crossOrigin = 'anonymous';
@@ -33,7 +34,7 @@ export class MediaResources {
         });
         if (element instanceof HTMLVideoElement) { element.preload = 'auto'; element.playsInline = true; }
         element.src = view.url;
-        item = { element, ready }; this.pool.set(clip.id, item);
+        item = { url: view.url, element, ready }; this.pool.set(clip.id, item);
       }
       const entry = item;
       jobs.push((async () => {

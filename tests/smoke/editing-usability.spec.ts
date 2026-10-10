@@ -20,7 +20,8 @@ test('marquee in all directions, toggles, live group drag, bulk edits, duplicate
     await page.getByRole('button', { name: 'Open projects', exact: true }).click(); await page.getByRole('button', { name: 'Open timeline', exact: true }).click();
     await page.locator('[data-track-id="bottom"]').scrollIntoViewIfNeeded();
     const ruler = (await page.locator('.ruler').boundingBox())!, top = (await page.locator('[data-track-id="top"]').boundingBox())!, bottom = (await page.locator('[data-track-id="bottom"]').boundingBox())!;
-    const corners = [{ x: ruler.x + 40, y: top.y + 2 }, { x: ruler.x + 340, y: bottom.y + 80 }];
+    // Stay outside the scroll edge zone so auto-scroll cannot invalidate the cached test coordinates.
+    const corners = [{ x: ruler.x + 40, y: top.y + 2 }, { x: ruler.x + 340, y: bottom.y + 60 }];
     for (const [sx, sy, ex, ey] of [[0, 0, 1, 1], [1, 1, 0, 0], [0, 1, 1, 0], [1, 0, 0, 1]]) {
       await page.mouse.move(corners[sx].x, corners[sy].y); await page.mouse.down(); await page.mouse.move(corners[ex].x, corners[ey].y, { steps: 10 });
       await expect(page.locator('.selected-clip')).toHaveCount(3);

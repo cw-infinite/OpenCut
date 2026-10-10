@@ -1,6 +1,6 @@
 {
   "name": "opencut",
-  "version": "0.10.3",
+  "version": "0.10.4",
   "description": "OpenCut — a private, offline video editor for Windows",
   "author": "OpenCut",
   "private": true,
@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:smoke": "npm run build && playwright test",
     "setup:tools": "tsx scripts/setup-tools.ts",
-    "package": "npm run typecheck && npm run build && electron-builder --win portable --x64"
+    "package": "npm run typecheck && npm run build && electron-builder --win portable --x64",
+    "setup:creative": "tsx scripts/setup-creative.ts"
   },
   "dependencies": {
     "@electron-internal/extract-zip": "1.0.5",
@@ -33,6 +34,7 @@
     "ffprobe-static": "^3.1.0",
     "immer": "^10.1.1",
     "lucide-react": "^0.468.0",
+    "onnxruntime-node": "1.30.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^5.0.8"
@@ -62,11 +64,15 @@
     },
     "files": [
       "out/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/onnxruntime-node/bin/napi-v6/linux/**",
+      "!node_modules/onnxruntime-node/bin/napi-v6/darwin/**",
+      "!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**"
     ],
     "asarUnpack": [
       "node_modules/ffmpeg-static/**/*",
-      "node_modules/ffprobe-static/**/*"
+      "node_modules/ffprobe-static/**/*",
+      "node_modules/onnxruntime-node/**/*"
     ],
     "extraResources": [
       {
@@ -77,6 +83,10 @@
           "!**/*.part",
           "!**/*.zip"
         ]
+      },
+      {
+        "from": "docs/licenses",
+        "to": "tools/creative/licenses"
       }
     ],
     "win": {

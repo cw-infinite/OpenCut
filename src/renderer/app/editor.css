@@ -181,3 +181,7 @@
 .bulk-text-controls summary { cursor: pointer; font-weight: 600; font-size: 15px; }
 .bulk-text-controls .mixed-value { color: #d3bd8c; font-size: 14px; }
 .bulk-text-controls .check-row { flex-wrap: wrap; }
+
+.editing-workspace .modal.creative-modal { width: min(580px, 90vw); padding: 24px; max-height: 90vh; overflow: auto; } .creative-modal textarea { display: block; width: 100%; margin-top: 8px; padding: 10px; font: inherit; color: inherit; background: #121418; border: 1px solid #464951; border-radius: 6px; resize: vertical; }
+
+.speech-library-button { width: 100%; border: 1px solid #454950; padding: 10px; margin: 10px 0; border-radius: 6px; background: #24272d; }

@@ -13,6 +13,13 @@ export interface ToolCheck {
 export interface ToolReport { ready: boolean; tools: ToolCheck[]; checkedAt: string }
 export interface SetupProgress { stage: string; percent: number | null; detail: string }
 export interface OpenCutApi {
+  creative: {
+    status(): Promise<{ speech: boolean; background: boolean }>;
+    setup(kind: 'speech' | 'background'): Promise<{ speech: boolean; background: boolean }>;
+    generate(request: { kind: 'speech' | 'background'; projectId: string; text?: string; rate?: number; clipId?: string }): Promise<MediaAsset>;
+    cancel(): Promise<void>;
+    onProgress(callback: (progress: { stage: string; percent: number | null }) => void): () => void;
+  };
   capture: {
     sources(): Promise<{ id: string; name: string; thumbnail: string }[]>;
     authorize(mode: 'camera' | 'screen', source: string, audio: boolean): Promise<void>;
