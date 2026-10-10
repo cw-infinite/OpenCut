@@ -47,6 +47,6 @@ export function Projects({ onTools }: { onTools(): void }): JSX.Element {
         await store.setProject(await window.opencut.projects.rename(store.project.id, name));
       } else await store.setProject(await window.opencut.projects.create(name, settings));
     }}/>}
-    <footer className="workspace-footer"><span><span className="local-dot"/> Local workspace</span><span>OpenCut 0.10.2 · Offline editing & batch export</span></footer>
+    <footer className="workspace-footer"><span><span className="local-dot"/> Local workspace</span><span>OpenCut 0.10.3 · Offline editing & batch export</span></footer>
   </div>;
 }

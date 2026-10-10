@@ -2,7 +2,11 @@
 
 A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
 
-**Current build: 0.10.2 — M0–M9 plus M10 transcript editing, video stabilization and motion tracking. Broader manual acceptance remains pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+**Current build: 0.10.3 — M0–M9 plus M10 transcript editing, video stabilization and motion tracking. Broader manual acceptance remains pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+
+## New in 0.10.3
+
+Select multiple text or caption clips to open the bulk style inspector. Change font family, size, weight, italic, alignment, spacing, color, border/outline, shadow, glow, background and gradient together. Built-in and saved style presets can be applied to the whole selection. Mixed values are labeled; editing one property preserves the others. Each action is undoable, and caption wording/timing and unselected clips stay intact. Media selections retain their volume and mute controls.
 
 ## New in 0.10.2
 

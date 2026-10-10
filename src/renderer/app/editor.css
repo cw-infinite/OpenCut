@@ -177,3 +177,7 @@
 .timeline-open .timeline { flex: 1; min-height: 180px; display: flex; flex-direction: column; }
 .timeline-open .timeline-toolbar { flex-shrink: 0; }
 .timeline-open .timeline-scroll { flex: 1; min-height: 0; max-height: none; }
+.bulk-text-controls details { border-top: 1px solid #424951; padding: 12px 0; }
+.bulk-text-controls summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+.bulk-text-controls .mixed-value { color: #d3bd8c; font-size: 14px; }
+.bulk-text-controls .check-row { flex-wrap: wrap; }

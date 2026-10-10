@@ -14,6 +14,14 @@
 | M9: export and project polish | Automated acceptance passed | Typecheck, 57 unit/integration tests and all 16 desktop tests pass. Sequential 1080p/720p/480p export, TikTok 1080×1920/30, estimates, PNG/JPEG frames and duplicate-safe covers, batch cancel cleanup, silence removal/undo, missing-media relink, markers/groups, synthetic webcam and isolated test-window recording verified. Physical devices/system audio need manual acceptance. |
 | M10 | In progress | Transcript-based editing, local video stabilization and motion tracking implemented. Background removal, smart reframe and local TTS remain pending. |
 
+## 0.10.3 bulk caption and text styles
+
+Multi-selection now exposes font family, size, weight, italic, alignment, line/letter spacing, wrap width, text color, built-in/saved style presets, border/outline, shadow, glow, background and gradient controls. Mixed selections show mixed values; property edits retain unrelated styles and caption wording/timing. Each change is one atomic undoable edit across the selection, and locked clips prevent partial updates.
+
+Typecheck and all 68 unit/integration tests pass. Desktop acceptance checks mixed values, saved presets and undo, selective styling, preservation of word timing and unselected clips, saved-project reload, and real 1080p MP4 text/border colors on both selected captions. The bulk inspector screenshot was reviewed.
+
+All four targeted desktop tests pass: bulk-caption styling/export, animated-caption preview/export and both editing-usability workflows. The packaged app also passes the bulk-caption workflow and startup/bundled-tool checks. Release output: `dist/0.10.3/`.
+
 ## 0.10.2 direct editing improvements
 
 Preview move, scale and rotation now render live during pointer gestures, commit one undo entry on release, and cancel with Escape. Marquee selection caches clip geometry and highlights every touched clip while pressed in all four directions, with a live selection count. Pointer capture, cancellation and window-focus cleanup keep gestures bounded.
