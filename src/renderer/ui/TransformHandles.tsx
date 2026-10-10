@@ -1,11 +1,10 @@
-import { evaluate, setAnimatedValue } from '../engine/keyframes';
+import { evaluate } from '../engine/keyframes';
 import { useEffect, useState, type RefObject } from 'react';
 import { useEditor } from '../state/editor';
-import { editable } from '../engine/timeline';
 import { activeAt } from '../engine/compositor';
 
-export function TransformHandles({ canvas }: { canvas: RefObject<HTMLCanvasElement> }): JSX.Element | null {
-  const state = useEditor(), project = state.project!;
+export function TransformHandles({ canvas, gesture }: { canvas: RefObject<HTMLCanvasElement>; gesture(event: React.PointerEvent, mode: 'scale' | 'rotation'): void }): JSX.Element | null {
+  const state = useEditor(), project = state.dragPreview ?? state.project!;
   const clip = project.tracks.flatMap(track => track.clips).find(clip => clip.id === state.selected[0]);
   const [bounds, setBounds] = useState({ x: 0, y: 0, width: 0, height: 0 });
   useEffect(() => {
@@ -24,15 +23,6 @@ export function TransformHandles({ canvas }: { canvas: RefObject<HTMLCanvasEleme
   if (clip.type === 'text') { w = width / project.settings.width * bounds.width; h = height / project.settings.height * bounds.height; }
   else if (clip.fit !== 'stretch') { const fitWidth = bounds.width / ratio <= bounds.height; if (fitWidth === (clip.fit === 'fit')) h = w / ratio; else w = h * ratio; }
   const time = state.playhead - clip.start;
-  const gesture = (event: React.PointerEvent, property: 'scale' | 'rotation') => {
-    event.preventDefault(); event.stopPropagation();
-    const initial = evaluate(clip.transform[property], time), x = event.clientX, y = event.clientY;
-    const finish = (end: PointerEvent) => {
-      window.removeEventListener('pointerup', finish);
-      state.edit(project => { setAnimatedValue(editable(project, clip.id).clip.transform[property], time, property === 'scale' ? Math.max(.01, Math.min(10, initial * (1 + (end.clientX - x + end.clientY - y) / Math.max(40, w)))) : initial + end.clientX - x); });
-    };
-    window.addEventListener('pointerup', finish, { once: true });
-  };
   return <div className={'transform-box ' + (clip.type === 'text' ? 'text-transform' : '')} style={{ left: bounds.x + evaluate(clip.transform.x, time) * bounds.width, top: bounds.y + evaluate(clip.transform.y, time) * bounds.height,
     width: w * evaluate(clip.transform.scale, time), height: h * evaluate(clip.transform.scale, time), transform: `translate(-50%,-50%) rotate(${evaluate(clip.transform.rotation, time)}deg)` }}>
     <button className="scale-handle" title="Drag to scale" aria-label="Scale selected clip" onPointerDown={event => gesture(event, 'scale')}/>

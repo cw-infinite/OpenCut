@@ -12,7 +12,25 @@
 | M7: offline captions | Automated acceptance passed on base.en | 50 unit/integration tests and all 12 desktop tests pass. Animated presets match MP4 frames; two-minute synthetic speech has 25 phrase anchors with maximum 110 ms onset offset. Filler cuts, linked/reverse/speed timing and undo verified. small.en availability/download controls implemented; actual optional-model inference and real human/VLC acceptance remain unverified. |
 | M8: visual effects | Automated acceptance passed | All 31 effect/filter/adjustment/blend/mask/chroma/PiP cases change preview and match exported frames. 54 unit/integration tests and all 13 desktop tests passed at the M8 gate. Hardware performance and long-project acceptance remain manual follow-ups. |
 | M9: export and project polish | Automated acceptance passed | Typecheck, 57 unit/integration tests and all 16 desktop tests pass. Sequential 1080p/720p/480p export, TikTok 1080×1920/30, estimates, PNG/JPEG frames and duplicate-safe covers, batch cancel cleanup, silence removal/undo, missing-media relink, markers/groups, synthetic webcam and isolated test-window recording verified. Physical devices/system audio need manual acceptance. |
-| M10 | In progress | Transcript-based editing and local video stabilization implemented. Tracking, background removal, smart reframe and local TTS remain pending. |
+| M10 | In progress | Transcript-based editing, local video stabilization and motion tracking implemented. Background removal, smart reframe and local TTS remain pending. |
+
+## 0.10.2 direct editing improvements
+
+Preview move, scale and rotation now render live during pointer gestures, commit one undo entry on release, and cancel with Escape. Marquee selection caches clip geometry and highlights every touched clip while pressed in all four directions, with a live selection count. Pointer capture, cancellation and window-focus cleanup keep gestures bounded.
+
+The Add track dropdown is replaced by draggable media/text and track insertion areas with placement previews. Compatible drops use existing tracks; other types create a track above the destination. Locked tracks and overlapping insertions are rejected atomically. The editor fits the window with independent timeline scrolling and a resizable preview area.
+
+Typecheck, all 66 unit/integration tests and all 22 desktop tests pass. Tests inspect preview pixels and handles before release, one-step undo and cancellation, live marquee geometry/highlighting, media/text/audio drops, track order, save/reload, and existing export/caption/effect workflows. The updated layout screenshot was reviewed.
+
+All five checks also pass in the packaged 0.10.2 app: startup/bundled tools, both direct-editing workflows and both editing-usability workflows. Release output: `dist/0.10.2/`.
+
+## 0.10.1 motion tracking
+
+Video motion can now drive editable X/Y keyframes on an existing text or image overlay. The inspector provides subject selection, local tracking, progress/cancel and undoable application. Analysis uses the shared compositor and retains the overlay's initial offset. Clips are limited to 60 seconds, with explicit subject-loss errors and snapshot checks before applying.
+
+Typecheck and all 64 unit/integration tests pass. The desktop run passed 19 of 20 tests, including tracking cancellation, movement measurement, undo/redo, persistence and exported overlay movement. The existing group-drag assertion failed once and passed on a targeted rerun along with the bulk-media test; no timeline code was changed in this release. Tracking UI screenshot reviewed. Complex real footage and broader manual acceptance remain pending.
+
+All four packaged-app checks pass: startup/bundled tools, motion tracking with MP4 export, and both editing-usability workflows including group drag, bulk actions, preview zoom and fullscreen. Release output: `dist/0.10.1/`.
 
 ## 0.10.0 first M10 features
 

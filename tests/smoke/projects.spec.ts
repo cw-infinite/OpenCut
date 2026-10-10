@@ -47,10 +47,10 @@ test('create, import VFR video and MP3, seek proxy and restore project on restar
     await expect(page.locator('.project-title')).toHaveText('Import acceptance');
     await expect(page.locator('.media-card')).toHaveCount(3);
     await page.getByRole('button', { name: 'Open timeline', exact: true }).click();
-    await page.getByLabel('Add track').selectOption('video');
     const asset = page.locator('.editor-asset').filter({ hasText: 'variable-frame-rate.mp4' });
+    await asset.dragTo(page.locator('.new-track-zone.bottom'), { targetPosition: { x: 1, y: 30 } });
     const lane = page.locator('.track-lane').first();
-    for (const x of [1, 161, 321]) await asset.dragTo(lane, { targetPosition: { x, y: 35 } });
+    for (const x of [161, 321]) await asset.dragTo(lane, { targetPosition: { x, y: 35 } });
     await expect(page.locator('.timeline-clip')).toHaveCount(3);
     await page.screenshot({ path: 'test-results/timeline-before-preview.png', fullPage: true });
     await expect(page.getByRole('alert')).toHaveCount(0);

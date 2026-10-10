@@ -2,7 +2,21 @@
 
 A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
 
-**Current build: 0.10.0 — M0–M9 plus the first M10 features: transcript editing and video stabilization. Broader manual acceptance remains pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+**Current build: 0.10.2 — M0–M9 plus M10 transcript editing, video stabilization and motion tracking. Broader manual acceptance remains pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+
+## New in 0.10.2
+
+Preview move, resize and rotation now update live while dragging. Each gesture creates one undo entry; Escape cancels. Timeline marquee selection highlights every touched clip while pressed, across tracks in every direction, and shows a live selection count.
+
+Drag library media or the new **Text** tile directly onto a compatible track. Drop between tracks or in the bottom drop area to create a track at that position. Dropping onto a different track type creates a compatible track above it. A placement preview shows the intended start time. The Add track dropdown has been removed; double-click insertion and the Add text button remain available. Locked tracks and overlaps are protected.
+
+The timeline stays inside the editor window and scrolls independently. The preview area remains vertically resizable, with zoom and fullscreen controls.
+
+## New in 0.10.1
+
+Select a video clip and open **Motion tracking** in its inspector. Load the first frame, click a detailed feature or edge, then choose **Track movement**. Choose an unlocked text or image overlay that spans the source clip and apply the result. Tracking preserves the overlay’s initial offset and writes editable X/Y keyframes as one undoable edit. Review by scrubbing before exporting.
+
+Tracking is local and supports source transforms, crop, speed and reverse through the shared compositor. It samples at 10 Hz with a 320-pixel analysis edge and handles clips up to 60 seconds. It stops when the subject no longer matches; occlusion, similar-looking subjects, zoom and fast motion can require a shorter clip or manual keyframe correction.
 
 ## New in 0.10.0
 
@@ -10,7 +24,7 @@ Open **Captions → Edit video by transcript** after generating timed captions. 
 
 Select a video clip and choose **Stabilize video** in the inspector. Processing creates a local copy and preserves the clip timing, speed, direction and visual settings. Undo restores the original clip. Exposed edges are mirrored; review results for moving subjects. Originals remain intact.
 
-M10 remains in progress: motion tracking, background removal, smart reframe and local text-to-speech are still pending.
+M10 remains in progress: background removal, smart reframe and local text-to-speech are still pending.
 
 ## Easier editing in 0.9.1
 

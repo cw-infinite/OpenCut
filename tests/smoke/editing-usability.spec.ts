@@ -18,10 +18,18 @@ test('marquee in all directions, toggles, live group drag, bulk edits, duplicate
       project.tracks = ['bottom', 'top'].map(id => ({ id, name: id, kind: 'text', locked: false, muted: false, hidden: false, clips: clips.filter(clip => clip.trackId === id) })); await window.opencut.projects.saveEdit(project);
     }, clips);
     await page.getByRole('button', { name: 'Open projects', exact: true }).click(); await page.getByRole('button', { name: 'Open timeline', exact: true }).click();
+    await page.locator('[data-track-id="bottom"]').scrollIntoViewIfNeeded();
     const ruler = (await page.locator('.ruler').boundingBox())!, top = (await page.locator('[data-track-id="top"]').boundingBox())!, bottom = (await page.locator('[data-track-id="bottom"]').boundingBox())!;
     const corners = [{ x: ruler.x + 40, y: top.y + 2 }, { x: ruler.x + 340, y: bottom.y + 80 }];
     for (const [sx, sy, ex, ey] of [[0, 0, 1, 1], [1, 1, 0, 0], [0, 1, 1, 0], [1, 0, 0, 1]]) {
-      await page.mouse.move(corners[sx].x, corners[sy].y); await page.mouse.down(); await page.mouse.move(corners[ex].x, corners[ey].y, { steps: 10 }); await page.mouse.up();
+      await page.mouse.move(corners[sx].x, corners[sy].y); await page.mouse.down(); await page.mouse.move(corners[ex].x, corners[ey].y, { steps: 10 });
+      await expect(page.locator('.selected-clip')).toHaveCount(3);
+      await expect(page.locator('.selection-marquee')).toContainText('3 selected');
+      await expect.poll(async () => {
+        const marquee = (await page.locator('.selection-marquee').boundingBox())!;
+        return Math.max(Math.abs(marquee.x + (ex ? marquee.width : 0) - corners[ex].x), Math.abs(marquee.y + (ey ? marquee.height : 0) - corners[ey].y));
+      }).toBeLessThan(3);
+      await page.mouse.up();
       await expect(page.locator('.selected-clip')).toHaveCount(3);
     }
     await page.locator('[data-clip-id="b"]').click({ modifiers: ['Shift'] }); await expect(page.locator('.selected-clip')).toHaveCount(2);

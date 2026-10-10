@@ -25,6 +25,16 @@ export function useTimelineGesture(scroller: RefObject<HTMLDivElement>, scale: n
     const pointerId = event.pointerId;
     const point = (x: number, y: number) => { const rect = content.getBoundingClientRect(); return { x: x - rect.left, y: y - rect.top }; };
     const origin = point(event.clientX, event.clientY), initialX = event.clientX, initialY = event.clientY;
+    // Read clip geometry once. Selection styling does not change layout; scrolling
+    // is accounted for by converting the current pointer to content coordinates.
+    const rectangles = Array.from(content.querySelectorAll<HTMLElement>('[data-clip-id]')).map(element => {
+      const rect = element.getBoundingClientRect(), start = point(rect.left, rect.top);
+      return { id: element.dataset.clipId!, left: start.x, top: start.y, right: start.x + rect.width, bottom: start.y + rect.height };
+    });
+    const lanes = Array.from(content.querySelectorAll<HTMLElement>('[data-track-id]')).map(element => {
+      const rect = element.getBoundingClientRect(), start = point(rect.left, rect.top);
+      return { id: element.dataset.trackId!, top: start.y, bottom: start.y + rect.height };
+    });
     const keep = event.shiftKey || event.ctrlKey ? state.selected : [];
     if (clip) state.select(ids); else state.select(keep);
     useEditor.setState({ playing: false });
@@ -43,10 +53,7 @@ export function useTimelineGesture(scroller: RefObject<HTMLDivElement>, scale: n
         const key = `${current.x}:${current.y}`; if (last === key) return; last = key;
         const area = { left: Math.min(origin.x, current.x), top: Math.min(origin.y, current.y), width: Math.abs(current.x - origin.x), height: Math.abs(current.y - origin.y) };
         setBox(area);
-        const hit = Array.from(content.querySelectorAll<HTMLElement>('[data-clip-id]')).filter(element => {
-          const r = element.getBoundingClientRect(), a = point(r.left, r.top);
-          return a.x <= area.left + area.width && a.x + r.width >= area.left && a.y <= area.top + area.height && a.y + r.height >= area.top;
-        }).map(element => element.dataset.clipId!);
+        const hit = rectangles.filter(rect => rect.left <= area.left + area.width && rect.right >= area.left && rect.top <= area.top + area.height && rect.bottom >= area.top).map(rect => rect.id);
         const next = [...new Set([...keep, ...hit])];
         if (next.join() !== useEditor.getState().selected.join()) state.select(next);
       } else {
@@ -57,8 +64,8 @@ export function useTimelineGesture(scroller: RefObject<HTMLDivElement>, scale: n
           delta += correction;
         }
         delta = Math.max(-Math.min(...selected.map(item => item.start)), delta);
-        const lane = Array.from(content.querySelectorAll<HTMLElement>('[data-track-id]')).find(element => { const r = element.getBoundingClientRect(); return y >= r.top && y < r.bottom; });
-        trackDelta = lane ? project.tracks.findIndex(track => track.id === lane.dataset.trackId) - anchorTrack : 0;
+        const lane = lanes.find(lane => current.y >= lane.top && current.y < lane.bottom);
+        trackDelta = lane ? project.tracks.findIndex(track => track.id === lane.id) - anchorTrack : 0;
         const key = `${delta}:${trackDelta}`; if (last === key) return; last = key;
         const draft = { ...project, tracks: project.tracks.map(track => ({ ...track, clips: track.clips.map(item => ({ ...item })) })) };
         try { moveSelection(draft, ids, delta, trackDelta); valid = true; setInvalid(''); useEditor.setState({ dragPreview: draft }); }
@@ -67,11 +74,13 @@ export function useTimelineGesture(scroller: RefObject<HTMLDivElement>, scale: n
     };
     const tick = () => { update(); raf = requestAnimationFrame(tick); };
     const move = (event: PointerEvent) => { if (event.pointerId !== pointerId) return; x = event.clientX; y = event.clientY; if (!moved && Math.hypot(x - initialX, y - initialY) > 3) { moved = true; content.setPointerCapture(pointerId); } };
-    const stop = () => { cancelAnimationFrame(raf); window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', finish); window.removeEventListener('pointercancel', stop); window.removeEventListener('keydown', key); if (content.hasPointerCapture(pointerId)) content.releasePointerCapture(pointerId); setBox(null); setInvalid(''); useEditor.setState({ dragPreview: null }); cleanup.current = () => {}; };
-    const finish = (event: PointerEvent) => { x = event.clientX; y = event.clientY; update(); if (clip && moved && valid && useEditor.getState().project === project) state.edit(project => moveSelection(project, ids, delta, trackDelta)); else if (!clip && !moved) state.seek(Math.max(0, (origin.x - 185) / scale)); stop(); };
-    const key = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); stop(); } };
+    const stop = () => { cancelAnimationFrame(raf); window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', finish); window.removeEventListener('pointercancel', cancel); window.removeEventListener('keydown', key); window.removeEventListener('blur', abort); content.removeEventListener('lostpointercapture', abort); if (content.hasPointerCapture(pointerId)) content.releasePointerCapture(pointerId); setBox(null); setInvalid(''); useEditor.setState({ dragPreview: null }); cleanup.current = () => {}; };
+    const finish = (event: PointerEvent) => { if (event.pointerId !== pointerId) return; x = event.clientX; y = event.clientY; update(); if (clip && moved && valid && useEditor.getState().project === project) state.edit(project => moveSelection(project, ids, delta, trackDelta)); else if (!clip && !moved) state.seek(Math.max(0, (origin.x - 185) / scale)); stop(); };
+    const abort = () => { if (!clip) state.select(state.selected); stop(); };
+    const cancel = (event: PointerEvent) => { if (event.pointerId === pointerId) abort(); };
+    const key = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); abort(); } };
     cleanup.current = stop;
-    window.addEventListener('pointermove', move); window.addEventListener('pointerup', finish); window.addEventListener('pointercancel', stop); window.addEventListener('keydown', key); raf = requestAnimationFrame(tick);
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', finish); window.addEventListener('pointercancel', cancel); window.addEventListener('keydown', key); window.addEventListener('blur', abort); content.addEventListener('lostpointercapture', abort); raf = requestAnimationFrame(tick);
   };
   return { box, invalid, start };
 }

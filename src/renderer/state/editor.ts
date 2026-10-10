@@ -7,20 +7,22 @@ import { duplicateSelection } from '../engine/selection';
 enablePatches();
 interface History { undo: Patch[]; redo: Patch[] }
 interface EditorState {
+  dragItem: { kind: 'media'; id: string } | { kind: 'text' } | null;
   dragPreview: Project | null;
   project: Project | null; selected: string[]; playhead: number; playing: boolean; zoom: number; snap: boolean;
   history: History[]; future: History[]; clipboard: Clip[]; error: string | null; dirty: boolean;
   load(project: Project): void;
   edit(recipe: (project: Project) => void): void;
   undo(): void; redo(): void; select(ids: string[]): void; seek(time: number): void; play(): void;
-  addTrack(kind: Track['kind']): void; addMedia(mediaId: string, trackId?: string, time?: number): void;
-  addText(): void;
+  addTrack(kind: Track['kind']): void; addMedia(mediaId: string, trackId?: string, time?: number, index?: number): void;
+  addText(trackId?: string, time?: number, index?: number): void;
   split(): void; remove(ripple?: boolean): void; copy(): void; paste(): void; duplicate(): void;
 }
 export const useEditor = create<EditorState>((set, get) => ({
+  dragItem: null,
   dragPreview: null,
   project: null, selected: [], playhead: 0, playing: false, zoom: 80, snap: true, history: [], future: [], clipboard: [], error: null, dirty: false,
-  load: project => set({ project, dragPreview: null, selected: [], playhead: 0, playing: false, history: [], future: [], dirty: false }),
+  load: project => set({ project, dragItem: null, dragPreview: null, selected: [], playhead: 0, playing: false, history: [], future: [], dirty: false }),
   edit: recipe => {
     const { project, history } = get(); if (!project) return;
     try {
@@ -34,20 +36,25 @@ export const useEditor = create<EditorState>((set, get) => ({
   seek: time => set({ playhead: Math.max(0, Math.round(time)) }),
   play: () => set(state => ({ playing: !state.playing, playhead: state.project && state.playhead >= durationOf(state.project) ? 0 : state.playhead })),
   addTrack: kind => get().edit(project => { project.tracks.push(makeTrack(crypto.randomUUID(), kind, `${kind[0].toUpperCase() + kind.slice(1)} ${project.tracks.filter(track => track.kind === kind).length + 1}`)); }),
-  addText: () => {
-    const id = crypto.randomUUID();
-    get().edit(project => { const track = makeTrack(crypto.randomUUID(), 'text', 'Text'); track.clips.push(makeTextClip(id, track.id, get().playhead)); project.tracks.push(track); }); get().select([id]);
+  addText: (trackId, time, index) => {
+    const id = crypto.randomUUID(), before = get().project;
+    get().edit(project => {
+      let track = project.tracks.find(track => track.id === trackId);
+      if (!track) { track = makeTrack(crypto.randomUUID(), 'text', 'Text'); project.tracks.splice(index ?? project.tracks.length, 0, track); }
+      if (track.locked) throw new Error('Track is locked');
+      track.clips.push(makeTextClip(id, track.id, Math.round(time ?? get().playhead))); track.clips.sort((a, b) => a.start - b.start);
+    }); if (get().project !== before) get().select([id]);
   },
-  addMedia: (mediaId, trackId, time) => {
-    const id = crypto.randomUUID();
+  addMedia: (mediaId, trackId, time, index) => {
+    const id = crypto.randomUUID(), before = get().project;
     get().edit(project => {
       const media = project.media[mediaId]; if (!media) throw new Error('Media is missing');
       const kind = media.kind === 'audio' ? 'audio' : 'video';
       let track = project.tracks.find(track => track.id === trackId);
-      if (!track) { track = makeTrack(crypto.randomUUID(), kind, `${kind === 'audio' ? 'Audio' : 'Video'} ${project.tracks.length + 1}`); project.tracks.push(track); }
+      if (!track) { track = makeTrack(crypto.randomUUID(), kind, `${kind === 'audio' ? 'Audio' : 'Video'} ${project.tracks.length + 1}`); project.tracks.splice(index ?? project.tracks.length, 0, track); }
       if (track.locked) throw new Error('Track is locked');
       track.clips.push(makeMediaClip(id, media, track.id, time ?? get().playhead)); track.clips.sort((a, b) => a.start - b.start);
-    }); get().select([id]);
+    }); if (get().project !== before) get().select([id]);
   },
   split: () => get().edit(project => {
     const selected = get().selected;
