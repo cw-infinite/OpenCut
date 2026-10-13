@@ -10,10 +10,18 @@ export function usePreviewGesture(canvas: RefObject<HTMLCanvasElement>) {
   useEffect(() => () => cleanup.current(), []);
   return (event: ReactPointerEvent, mode: 'move' | 'scale' | 'rotation' = 'move') => {
     const state = useEditor.getState(), project = state.project;
-    if (event.button !== 0 || !project || state.selected.length !== 1 || !canvas.current) return;
-    const track = project.tracks.find(track => track.clips.some(clip => clip.id === state.selected[0]));
-    const clip = track?.clips.find(clip => clip.id === state.selected[0]);
-    if (!clip || track?.locked || track?.hidden || track?.kind === 'audio' || !activeAt(clip, state.playhead)) return;
+    if (event.button !== 0 || !project || !state.selected.length || !canvas.current) return;
+    const selected = project.tracks.flatMap(track => track.clips.filter(clip => state.selected.includes(clip.id)).map(clip => ({ clip, track })));
+    if (selected.length !== state.selected.length || selected.some(({ track }) => track.locked || track.hidden || track.kind === 'audio')) return;
+    if (selected.length > 1 && (mode !== 'move' || selected.some(({ clip }) => clip.type !== 'text'))) return;
+    const clip = selected.find(({ clip }) => activeAt(clip, state.playhead))?.clip;
+    if (!clip) return;
+    const positions = new Map(selected.map(({ clip }) => {
+      const time = Math.max(0, Math.min(clip.duration, state.playhead - clip.start));
+      return [clip.id, { time, x: evaluate(clip.transform.x, time), y: evaluate(clip.transform.y, time) }];
+    }));
+    const values = [...positions.values()];
+    const limits = { minX: Math.max(...values.map(value => -2 - value.x)), maxX: Math.min(...values.map(value => 3 - value.x)), minY: Math.max(...values.map(value => -2 - value.y)), maxY: Math.min(...values.map(value => 3 - value.y)) };
     event.preventDefault(); event.stopPropagation(); cleanup.current();
     (document.activeElement as HTMLElement | null)?.blur();
     useEditor.setState({ playing: false });
@@ -25,8 +33,11 @@ export function usePreviewGesture(canvas: RefObject<HTMLCanvasElement>) {
     let x = sx, y = sy, raf = 0, moved = false, last = '';
     const apply = (target: Clip) => {
       if (mode === 'move') {
-        setAnimatedValue(target.transform.x, time, Math.max(-2, Math.min(3, initial.x + (x - sx) / rect.width)));
-        setAnimatedValue(target.transform.y, time, Math.max(-2, Math.min(3, initial.y + (y - sy) / rect.height)));
+        const start = positions.get(target.id)!;
+        const dx = Math.max(limits.minX, Math.min(limits.maxX, (x - sx) / rect.width));
+        const dy = Math.max(limits.minY, Math.min(limits.maxY, (y - sy) / rect.height));
+        setAnimatedValue(target.transform.x, start.time, start.x + dx);
+        setAnimatedValue(target.transform.y, start.time, start.y + dy);
       } else if (mode === 'scale') setAnimatedValue(target.transform.scale, time, Math.max(.01, Math.min(10, initial.scale * Math.hypot(x - cx, y - cy) / distance)));
       else {
         const delta = Math.atan2(Math.sin(Math.atan2(y - cy, x - cx) - angle), Math.cos(Math.atan2(y - cy, x - cx) - angle));
@@ -35,8 +46,8 @@ export function usePreviewGesture(canvas: RefObject<HTMLCanvasElement>) {
     };
     const update = () => {
       raf = 0; if (!moved || last === `${x}:${y}`) return; last = `${x}:${y}`;
-      const preview = { ...project, tracks: project.tracks.map(track => ({ ...track, clips: track.clips.map(item => item.id === clip.id ? { ...item, transform: structuredClone(item.transform) } : item) })) };
-      apply(editable(preview, clip.id).clip); useEditor.setState({ dragPreview: preview });
+      const preview = { ...project, tracks: project.tracks.map(track => ({ ...track, clips: track.clips.map(item => positions.has(item.id) ? { ...item, transform: structuredClone(item.transform) } : item) })) };
+      for (const { clip } of selected) apply(editable(preview, clip.id).clip); useEditor.setState({ dragPreview: preview });
     };
     const stop = () => {
       cancelAnimationFrame(raf); window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', finish); window.removeEventListener('pointercancel', cancel); window.removeEventListener('keydown', key); window.removeEventListener('blur', stop); node.removeEventListener('lostpointercapture', stop);
@@ -50,7 +61,7 @@ export function usePreviewGesture(canvas: RefObject<HTMLCanvasElement>) {
     };
     const finish = (event: PointerEvent) => {
       if (event.pointerId !== pointerId) return; x = event.clientX; y = event.clientY;
-      if (moved && useEditor.getState().project === project) state.edit(project => apply(editable(project, clip.id).clip));
+      if (moved && useEditor.getState().project === project) state.edit(project => { for (const { clip } of selected) apply(editable(project, clip.id).clip); });
       stop();
     };
     const cancel = (event: PointerEvent) => { if (event.pointerId === pointerId) stop(); };

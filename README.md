@@ -2,7 +2,21 @@
 
 A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
 
-**Current build: 0.10.4 — M0–M10 features implemented; broader manual acceptance remains pending.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+**Current build: 0.10.6 — M0–M10 features implemented; stability validation underway.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+
+## New in 0.10.6
+
+- Stable preview sizing, source playback on media clicks, and live clip trimming.
+- Close gaps across all tracks or on a selected track, preserving linked clips.
+- Fifty motion-text templates and ten additional text styles.
+- Wider, resizable media and inspector panels, with organized text controls.
+- Move selected captions/texts together in the preview or through shared X/Y controls, with undo and drag cancellation.
+
+## New in 0.10.5
+
+Media loading and seeking now cancel cleanly when their source is released, with bounded waits for damaged or unavailable media. Retired audio graph nodes are disconnected, silent videos avoid unnecessary audio graphs, and font-readiness caching follows active text. Playback timecodes use fixed-width digits to keep controls steady.
+
+A generated one-hour, 900-clip timeline sustained approximately 49 fps during a ten-second five-track 1080p half-quality playback sample on the test desktop. Renderer selection response stayed below 38 ms. See [stability measurements and reproducible checks](docs/STABILITY.md) for the exact fixture, hardware and remaining acceptance coverage.
 
 ## New in 0.10.4
 

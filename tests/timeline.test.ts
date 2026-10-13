@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createProject } from '../src/shared/project';
-import { makeMediaClip, makeTrack, validateTimeline, splitClip, trimClip, moveClip, deleteClips, snapTime } from '../src/renderer/engine/timeline';
+import { makeMediaClip, makeTrack, validateTimeline, splitClip, trimClip, moveClip, deleteClips, snapTime, closeTimelineGaps, closeTrackGaps } from '../src/renderer/engine/timeline';
 import { frameTime, toFrame, toUs } from '../src/renderer/engine/time';
 import { useEditor } from '../src/renderer/state/editor';
 import type { MediaClip } from '../src/shared/types';
@@ -68,3 +68,35 @@ describe('integer-time timeline', () => {
     expect(result.tracks[0].clips[1].linkId).not.toBe('linked');
   });
 });
+
+ describe('closing timeline gaps', () => {
+   it('closes leading and middle gaps while preserving linked alignment and markers', () => {
+     const project = fixture(); splitClip(project, 'clip', 4e6, 'right');
+     project.tracks[0].clips[0].start = 1e6; project.tracks[0].clips[1].start = 7e6;
+     const audio = makeTrack('audio', 'audio', 'Audio');
+     audio.clips = structuredClone(project.tracks[0].clips).map(clip => ({ ...clip, id: clip.id + '-audio', trackId: 'audio', linkId: clip.id }));
+     project.tracks[0].clips.forEach(clip => { clip.linkId = clip.id; }); project.tracks.push(audio);
+     project.markers = [{ id: 'm', time: 8e6, label: 'Beat' }];
+     closeTimelineGaps(project); validateTimeline(project);
+     expect(project.tracks.map(track => track.clips.map(clip => clip.start))).toEqual([[0, 4e6], [0, 4e6]]);
+     expect(project.markers[0].time).toBe(5e6);
+   });
+   it('keeps intervals occupied by another track and makes gap closing undoable', () => {
+     const project = fixture(); project.tracks[0].clips[0].start = 2e6;
+     const cover = makeTrack('cover', 'video', 'Cover'); cover.clips.push(makeMediaClip('cover-clip', project.media.video, cover.id, 0)); project.tracks.push(cover);
+     closeTimelineGaps(project); expect(project.tracks[0].clips[0].start).toBe(2e6);
+     project.tracks.pop(); useEditor.getState().load(project); useEditor.getState().edit(closeTimelineGaps);
+     expect(useEditor.getState().project!.tracks[0].clips[0].start).toBe(0);
+     useEditor.getState().undo(); expect(useEditor.getState().project!.tracks[0].clips[0].start).toBe(2e6);
+     project.tracks[0].locked = true; expect(() => closeTimelineGaps(project)).toThrow('Unlock');
+   });
+ });
+
+ it('packs a selected track even when another track spans its gaps', () => {
+   const project = fixture(); splitClip(project, 'clip', 4e6, 'right');
+   project.tracks[0].clips[0].start = 1e6; project.tracks[0].clips[1].start = 7e6;
+   const bed = makeTrack('bed', 'audio', 'Bed'); bed.clips.push(makeMediaClip('bed-clip', project.media.video, bed.id, 0)); project.tracks.push(bed);
+   closeTrackGaps(project, 'track');
+   expect(project.tracks[0].clips.map(clip => clip.start)).toEqual([0, 4e6]);
+   expect(project.tracks[1].clips[0].start).toBe(0); validateTimeline(project);
+ });

@@ -66,3 +66,47 @@ test('bulk caption typography, mixed values, preset undo, outlines and exported 
     }
   } finally { await app.evaluate(({ app }) => app.exit(0)).catch(() => {}); await app.close().catch(() => {}); }
 });
+
+
+test('selected sequential captions move together in preview and with X/Y controls, cancel and undo', async () => {
+  const app = await electron.launch({ executablePath: process.env.OPENCUT_EXECUTABLE, args: process.env.OPENCUT_EXECUTABLE ? [] : ['.'], env: { ...process.env, OPENCUT_TEST_DATA: resolve('.test-data/bulk-position-' + randomUUID()) } });
+  try {
+    const page = await app.firstWindow();
+    const clips = ['First', 'Second', 'Unselected'].map((text, i) => captionClip({ text, start: i * 1e6, end: (i + 1) * 1e6, words: [] }, 'captions', 'caption-' + i));
+    await page.evaluate(async clips => {
+      const project = await window.opencut.projects.create('Position captions', { width: 640, height: 360, fps: 30, sampleRate: 48000 });
+      project.tracks = [{ id: 'captions', name: 'Captions', kind: 'text', hidden: false, locked: false, muted: false, clips }];
+      await window.opencut.projects.saveEdit(project);
+    }, clips);
+    await page.getByRole('button', { name: 'Open projects', exact: true }).click(); await page.getByRole('button', { name: 'Open timeline', exact: true }).click();
+    const select = async () => { await page.locator('[data-clip-id="caption-0"]').click({ position: { x: 30, y: 30 } }); await page.locator('[data-clip-id="caption-1"]').click({ position: { x: 30, y: 30 }, modifiers: ['Shift'] }); };
+    await select();
+    await expect(page.getByLabel('Selection position X', { exact: true })).toHaveValue('0.5');
+    await page.getByLabel('Selection position X', { exact: true }).fill('0.6');
+    await page.getByLabel('Selection position Y', { exact: true }).fill('0.5');
+    const canvas = (await page.locator('.canvas-surface canvas').boundingBox())!, box = page.locator('.transform-box');
+    const original = (await box.boundingBox())!;
+    const start = { x: canvas.x + canvas.width * .6, y: canvas.y + canvas.height * .5 };
+    await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(start.x + 30, start.y - 15, { steps: 8 });
+    await expect.poll(async () => (await box.boundingBox())!.x).toBeCloseTo(original.x + 30, 0);
+    await page.keyboard.press('Escape'); await page.mouse.up();
+    await expect.poll(async () => (await box.boundingBox())!.x).toBeCloseTo(original.x, 0);
+    await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(start.x + 30, start.y - 15, { steps: 8 }); await page.mouse.up();
+    await expect(page.getByLabel('Selection position X', { exact: true })).not.toHaveValue('0.6');
+    await page.getByTitle('Undo (Ctrl+Z)', { exact: true }).click(); await select();
+    await expect(page.getByLabel('Selection position X', { exact: true })).toHaveValue('0.6');
+    // First selected caption is inactive here; dragging the second still moves both.
+    await page.locator('.ruler').click({ position: { x: 120, y: 10 } });
+    const next = (await box.boundingBox())!;
+    await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(start.x + 20, start.y + 10, { steps: 8 });
+    await expect.poll(async () => (await box.boundingBox())!.x).toBeCloseTo(next.x + 20, 0); await page.mouse.up();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await page.getByRole('button', { name: 'Source browser', exact: true }).click();
+    const saved = await page.evaluate(async () => (await window.opencut.projects.open((await window.opencut.projects.last())!)).project);
+    expect(saved.tracks[0].clips[0].transform).toEqual(saved.tracks[0].clips[1].transform);
+    expect(saved.tracks[0].clips[0].transform.x.value).toBeCloseTo(.6 + 20 / canvas.width);
+    expect(saved.tracks[0].clips[0].transform.y.value).toBeCloseTo(.5 + 10 / canvas.height);
+    expect(saved.tracks[0].clips[2]).toEqual(clips[2]);
+    for (let i = 0; i < 2; i++) expect(saved.tracks[0].clips[i]).toMatchObject({ start: clips[i].start, duration: clips[i].duration, content: clips[i].content });
+  } finally { await app.evaluate(({ app }) => app.exit(0)).catch(() => {}); await app.close().catch(() => {}); }
+});

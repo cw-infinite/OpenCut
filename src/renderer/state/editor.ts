@@ -9,6 +9,7 @@ interface History { undo: Patch[]; redo: Patch[] }
 interface EditorState {
   dragItem: { kind: 'media'; id: string } | { kind: 'text' } | null;
   dragPreview: Project | null;
+  sourcePreview: string | null;
   project: Project | null; selected: string[]; playhead: number; playing: boolean; zoom: number; snap: boolean;
   history: History[]; future: History[]; clipboard: Clip[]; error: string | null; dirty: boolean;
   load(project: Project): void;
@@ -21,8 +22,9 @@ interface EditorState {
 export const useEditor = create<EditorState>((set, get) => ({
   dragItem: null,
   dragPreview: null,
+  sourcePreview: null,
   project: null, selected: [], playhead: 0, playing: false, zoom: 80, snap: true, history: [], future: [], clipboard: [], error: null, dirty: false,
-  load: project => set({ project, dragItem: null, dragPreview: null, selected: [], playhead: 0, playing: false, history: [], future: [], dirty: false }),
+  load: project => set({ sourcePreview: null, project, dragItem: null, dragPreview: null, selected: [], playhead: 0, playing: false, history: [], future: [], dirty: false }),
   edit: recipe => {
     const { project, history } = get(); if (!project) return;
     try {
@@ -32,9 +34,9 @@ export const useEditor = create<EditorState>((set, get) => ({
   },
   undo: () => { const state = get(), action = state.history.at(-1); if (action && state.project) set({ project: applyPatches(state.project, action.undo), history: state.history.slice(0, -1), future: [...state.future, action], dirty: true, selected: [] }); },
   redo: () => { const state = get(), action = state.future.at(-1); if (action && state.project) set({ project: applyPatches(state.project, action.redo), future: state.future.slice(0, -1), history: [...state.history, action], dirty: true, selected: [] }); },
-  select: selected => set({ selected }),
-  seek: time => set({ playhead: Math.max(0, Math.round(time)) }),
-  play: () => set(state => ({ playing: !state.playing, playhead: state.project && state.playhead >= durationOf(state.project) ? 0 : state.playhead })),
+  select: selected => set({ selected, sourcePreview: null }),
+  seek: time => set({ sourcePreview: null, playhead: Math.max(0, Math.round(time)) }),
+  play: () => set(state => ({ sourcePreview: null, playing: !state.playing, playhead: state.project && state.playhead >= durationOf(state.project) ? 0 : state.playhead })),
   addTrack: kind => get().edit(project => { project.tracks.push(makeTrack(crypto.randomUUID(), kind, `${kind[0].toUpperCase() + kind.slice(1)} ${project.tracks.filter(track => track.kind === kind).length + 1}`)); }),
   addText: (trackId, time, index) => {
     const id = crypto.randomUUID(), before = get().project;

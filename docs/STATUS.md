@@ -14,6 +14,14 @@
 | M9: export and project polish | Automated acceptance passed | Typecheck, 57 unit/integration tests and all 16 desktop tests pass. Sequential 1080p/720p/480p export, TikTok 1080×1920/30, estimates, PNG/JPEG frames and duplicate-safe covers, batch cancel cleanup, silence removal/undo, missing-media relink, markers/groups, synthetic webcam and isolated test-window recording verified. Physical devices/system audio need manual acceptance. |
 | M10 | Automated acceptance passed; broader manual QA pending | Transcript editing, stabilization, motion tracking, subject-following smart reframe, local Piper speech and MODNet portrait background removal. Real-footage quality and broader manual acceptance remain pending. |
 
+## 0.10.5 stability pass
+
+Typecheck, all 75 unit/integration tests and all 25 desktop regression tests pass. Decode waits now settle on success, errors, timeout and cancellation. Audio source/gain nodes disconnect on retirement, silent videos avoid unnecessary audio graphs, font-readiness caching is bounded by active text, and tabular timecodes keep playback controls stationary.
+
+Packaged five-track 1080p playback at half quality on a one-hour, 900-clip timeline measures 50.61 fps, 27.7 ms p95 frame interval and 25.6 ms renderer selection response during a ten-second sample. The synthetic one-hour 480p30 export passed with matching 3,600-second stream durations, zero measured flash/beep drift and 21.76 MiB average Electron working-set growth. Hardware and fixture limits are documented in `STABILITY.md`.
+
+Portable 0.10.5 packaging completed successfully. Five packaged desktop checks passed (audio, creative generation, both editing-usability workflows and startup), along with the packaged performance check. Release output: `dist/0.10.5/OpenCut-0.10.5-x64.exe`.
+
 ## 0.10.4 remaining M10 features
 
 Smart reframe analyzes a user-selected source feature and creates edge-clamped fill-mode position keyframes for the current canvas. Local Piper speech produces an editable audio clip at the playhead with speed selection. MODNet portrait removal creates transparent PNG/WebM derivatives, preserving original media and compositing over lower tracks in preview and export. Both generation workflows expose cancellation and undoable timeline application; setup is explicit and checksum-verified, with tools included in the portable build.

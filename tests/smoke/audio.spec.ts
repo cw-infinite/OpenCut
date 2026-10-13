@@ -10,7 +10,7 @@ test('audio controls persist, beats become markers, audio exports and fake-mic v
   const root = resolve('.test-data/audio-' + randomUUID()); await mkdir(root, { recursive: true });
   const source = join(root, 'beats.wav');
   await runProcess(ffmpegPath, ['-v', 'error', '-y', '-f', 'lavfi', '-i', "aevalsrc='sin(2*PI*440*t)*if(lt(mod(t,0.5),0.05),0.7,0.005)':s=48000:d=3", source]);
-  const app = await electron.launch({ args: ['.', '--use-fake-device-for-media-stream'], env: { ...process.env, OPENCUT_TEST_DATA: join(root, 'app') } });
+  const app = await electron.launch({ executablePath: process.env.OPENCUT_EXECUTABLE, args: [...(process.env.OPENCUT_EXECUTABLE ? [] : ['.']), '--use-fake-device-for-media-stream'], env: { ...process.env, OPENCUT_TEST_DATA: join(root, 'app') } });
   try {
     const page = await app.firstWindow();
     await page.getByRole('button', { name: 'Open projects', exact: true }).click();

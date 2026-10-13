@@ -109,3 +109,34 @@ export function snapTime(time: number, candidates: number[], threshold: number):
   for (const candidate of candidates) if (candidate >= 0 && Math.abs(candidate - time) <= distance) { best = candidate; distance = Math.abs(candidate - time); }
   return Math.round(best);
 }
+
+/** Remove globally empty intervals, preserving track alignment and linked clips. */
+export function closeTimelineGaps(project: Project): void {
+  const clips = project.tracks.flatMap(track => track.clips).sort((a, b) => a.start - b.start);
+  const gaps: { start: number; end: number }[] = [];
+  let end = 0;
+  for (const clip of clips) {
+    if (clip.start > end) gaps.push({ start: end, end: clip.start });
+    end = Math.max(end, endOf(clip));
+  }
+  const offset = (time: number) => gaps.reduce((sum, gap) => sum + Math.max(0, Math.min(time, gap.end) - gap.start), 0);
+  for (const track of project.tracks) for (const clip of track.clips) {
+    const shift = offset(clip.start);
+    if (shift && track.locked) throw new Error('Unlock affected tracks before closing gaps');
+    clip.start -= shift;
+  }
+  for (const marker of project.markers) marker.time -= offset(marker.time);
+}
+
+/** Pack one track to the left, moving linked partners by the same amount. */
+export function closeTrackGaps(project: Project, trackId: string): void {
+  const track = project.tracks.find(track => track.id === trackId);
+  if (!track) throw new Error('Select a clip on the track to close gaps');
+  let end = 0;
+  for (const clip of [...track.clips].sort((a, b) => a.start - b.start)) {
+    const start = Math.max(0, end - (clip.transitionIn?.duration ?? 0));
+    if (clip.start > start) moveClip(project, clip.id, track.id, start);
+    end = endOf(clip);
+  }
+  validateTimeline(project);
+}

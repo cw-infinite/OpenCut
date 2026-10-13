@@ -1,7 +1,7 @@
 import type { TextAnimation } from '../../shared/types';
 import { ease } from './keyframes';
 
-export const textPresets = ['fade', 'slideUp', 'slideDown', 'slideLeft', 'slideRight', 'pop', 'zoomIn', 'typewriter', 'bounce', 'blurIn', 'rotateIn', 'wipe'] as const;
+export const textPresets = ['fade', 'slideUp', 'slideDown', 'slideLeft', 'slideRight', 'pop', 'zoomIn', 'typewriter', 'bounce', 'blurIn', 'rotateIn', 'wipe', 'zoomOut', 'spinIn', 'riseSpin', 'dropSpin', 'swingIn', 'elastic', 'driftUpLeft', 'driftUpRight', 'driftDownLeft', 'driftDownRight', 'spiral', 'blurZoom', 'rubberBand'] as const;
 export const loopPresets = ['pulse', 'wiggle', 'float', 'shake', 'flicker', 'colorCycle'] as const;
 export interface TextMotion { dx: number; dy: number; scale: number; rotation: number; opacity: number; blur: number; reveal: number; hue: number }
 const identity = (): TextMotion => ({ dx: 0, dy: 0, scale: 1, rotation: 0, opacity: 1, blur: 0, reveal: 1, hue: 0 });
@@ -26,6 +26,19 @@ export function textMotion(preset: string, progress: number, loop = false): Text
   if (preset === 'bounce') motion.dy = -(1 - p) * Math.abs(Math.cos(p * Math.PI * 3)) * 100;
   if (preset === 'blurIn') motion.blur = (1 - p) * 20;
   if (preset === 'rotateIn') { motion.rotation = (1 - p) * -45; motion.scale = .5 + p * .5; }
+  if (preset === 'zoomOut') motion.scale = 2 - p;
+  if (preset === 'spinIn') { motion.rotation = -360 * (1 - p); motion.scale = .2 + .8 * p; }
+  if (preset === 'riseSpin') { motion.rotation = -90 * (1 - p); motion.dy = 120 * (1 - p); }
+  if (preset === 'dropSpin') { motion.rotation = 90 * (1 - p); motion.dy = -120 * (1 - p); }
+  if (preset === 'swingIn') motion.rotation = Math.sin(p * Math.PI * 3) * 35 * (1 - p);
+  if (preset === 'elastic') motion.scale = 1 - Math.cos(p * Math.PI * 4) * (1 - p);
+  if (preset.startsWith('drift')) {
+    motion.dx = (preset.endsWith('Left') ? 1 : -1) * 120 * (1 - p);
+    motion.dy = (preset.includes('Up') ? 1 : -1) * 80 * (1 - p);
+  }
+  if (preset === 'spiral') { motion.dx = Math.cos(p * Math.PI * 4) * 100 * (1 - p); motion.dy = Math.sin(p * Math.PI * 4) * 100 * (1 - p); motion.rotation = 180 * (1 - p); }
+  if (preset === 'blurZoom') { motion.blur = 25 * (1 - p); motion.scale = 1.5 - .5 * p; }
+  if (preset === 'rubberBand') motion.scale = 1 + Math.sin(p * Math.PI * 4) * .4 * (1 - p);
   if (preset === 'typewriter' || preset === 'wipe') { motion.opacity = 1; motion.reveal = p; }
   return motion;
 }
@@ -38,3 +51,13 @@ export function animationAt(animation: TextAnimation | undefined, time: number, 
   else p = (duration - time - (count - 1 - index) * animation.stagger) / animation.duration;
   return textMotion(animation.preset, ease(Math.max(0, Math.min(1, p)), animation.easing), phase === 'loop');
 }
+
+export interface MotionTemplate { name: string; category: 'Title' | 'Words'; animIn: TextAnimation; animOut: TextAnimation; animLoop?: TextAnimation }
+const motionNames = ['Soft fade', 'Rise', 'Drop', 'From right', 'From left', 'Pop', 'Grow', 'Type on', 'Bounce', 'Focus', 'Rotate', 'Reveal', 'Zoom back', 'Full spin', 'Rise & turn', 'Drop & turn', 'Swing', 'Elastic', 'Diagonal northwest', 'Diagonal northeast', 'Diagonal southwest', 'Diagonal southeast', 'Spiral', 'Focus & zoom', 'Rubber band'];
+export const motionTemplates: MotionTemplate[] = textPresets.flatMap((preset, index) => (['whole', 'word'] as const).map(granularity => ({
+  name: `${motionNames[index]} ${granularity === 'whole' ? 'title' : 'words'}`,
+  category: granularity === 'whole' ? 'Title' as const : 'Words' as const,
+  animIn: { preset, duration: 700000, easing: 'easeOut', granularity, stagger: granularity === 'word' ? 90000 : 0 },
+  animOut: { preset: index % 2 ? 'fade' : 'slideDown', duration: 400000, easing: 'easeIn', granularity, stagger: granularity === 'word' ? 40000 : 0 },
+  ...(index % 5 === 0 ? { animLoop: { preset: index % 2 ? 'float' : 'pulse', duration: 2400000, easing: 'linear' as const, granularity: 'whole' as const, stagger: 0 } } : {})
+})));

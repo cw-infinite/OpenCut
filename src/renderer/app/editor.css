@@ -185,3 +185,30 @@
 .editing-workspace .modal.creative-modal { width: min(580px, 90vw); padding: 24px; max-height: 90vh; overflow: auto; } .creative-modal textarea { display: block; width: 100%; margin-top: 8px; padding: 10px; font: inherit; color: inherit; background: #121418; border: 1px solid #464951; border-radius: 6px; resize: vertical; }
 
 .speech-library-button { width: 100%; border: 1px solid #454950; padding: 10px; margin: 10px 0; border-radius: 6px; background: #24272d; }
+
+.player-controls > span, .ruler-row > .track-label { font-variant-numeric: tabular-nums; }
+
+/* Stable preview viewport and adjustable editing panels. */
+.editor-top > .editor-library { width: var(--library-width, 310px); min-width: 0; }
+.editor-top > .inspector { width: var(--inspector-width, 350px); min-width: 0; }
+.panel-resizer { flex: 0 0 7px; cursor: col-resize; touch-action: none; background: #20252c; }
+.panel-resizer:hover, .panel-resizer:active { background: #91b774; }
+.canvas-wrap { contain: size; scrollbar-gutter: stable both-edges; }
+.preview-space { overflow: hidden; }
+.source-preview { position: absolute; inset: 0; display: grid; place-items: center; z-index: 3; background: #08090b; }
+.source-preview video, .source-preview img { width: 100%; height: 100%; object-fit: contain; }
+.source-preview-heading { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.source-preview-heading span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.source-preview-heading button { color: #c5ef9f; }
+.text-inspector-section { padding: 12px; margin: 12px 0; border: 1px solid #3b444f; border-radius: 8px; background: #191e25; }
+.inspector .text-inspector-section h3 { border: 0; padding: 0 0 10px; margin: 0; color: #dcf2c8; font-size: 15px; }
+.text-inspector-section .inspector-fields { gap: 12px; }
+.text-inspector-section input, .text-inspector-section select { min-width: 0; }
+.text-animation-controls { padding: 10px 0; border-top: 1px solid #39414c; }
+.motion-template-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 230px; overflow: auto; margin: 10px 0; }
+.motion-template-grid button { text-align: left; padding: 10px; background: #29323e; border: 1px solid #475362; border-radius: 5px; font-size: 13px; }
+.motion-template-grid button:hover { border-color: #c5ef9f; }
+.editor-library .media-grid { grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); }
+.editor-library .media-thumb { height: 90px; }
+
+.group-position-label { position: absolute; bottom: 100%; left: 0; padding: 3px 7px; background: #c5ef9f; color: #172011; font-size: 12px; white-space: nowrap; }

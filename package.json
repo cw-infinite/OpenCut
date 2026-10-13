@@ -1,6 +1,6 @@
 {
   "name": "opencut",
-  "version": "0.10.4",
+  "version": "0.10.6",
   "description": "OpenCut — a private, offline video editor for Windows",
   "author": "OpenCut",
   "private": true,
@@ -14,7 +14,8 @@
     "test:smoke": "npm run build && playwright test",
     "setup:tools": "tsx scripts/setup-tools.ts",
     "package": "npm run typecheck && npm run build && electron-builder --win portable --x64",
-    "setup:creative": "tsx scripts/setup-creative.ts"
+    "setup:creative": "tsx scripts/setup-creative.ts",
+    "test:stability": "playwright test --config playwright.stability.config.ts"
   },
   "dependencies": {
     "@electron-internal/extract-zip": "1.0.5",

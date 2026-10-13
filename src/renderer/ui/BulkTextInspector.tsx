@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { TextClip, TextStyle } from '../../shared/types';
 import { useEditor } from '../state/editor';
-import { commonValue, editTextStyles } from '../engine/bulkText';
+import { commonValue, editTextStyles, editTextPosition } from '../engine/bulkText';
+import { evaluate } from '../engine/keyframes';
 import { bundledFonts, defaultTextStyle, textStyles } from '../engine/text';
 
 const stroke = { color: '#000000', width: 3 };
@@ -26,7 +27,15 @@ export function BulkTextInspector({ clips }: { clips: TextClip[] }): JSX.Element
   };
   const select = (name: string, value: string | number | undefined, options: (string | number)[], set: (style: TextStyle, value: string) => void) => <label className="inspector-number">{name}<select aria-label={`Selection ${name.toLowerCase()}`} value={value ?? ''} onChange={event => { if (event.target.value) edit(style => set(style, event.target.value)); }}><option value="" disabled>Mixed</option>{options.map(option => <option key={option} value={option}>{option}</option>)}</select></label>;
   const any = (key: 'stroke' | 'shadow' | 'glow' | 'background' | 'gradient') => clips.some(clip => clip.style[key]);
-  return <section className="bulk-text-controls"><h3>Text & caption style</h3><p className="subtle">Changes apply to every selected text clip. Mixed values stay unchanged until you edit that property. Wording and caption timing are preserved.</p>
+  const position = (axis: 'x' | 'y') => {
+    const value = commonValue(clips.map(clip => evaluate(clip.transform[axis], Math.max(0, Math.min(clip.duration, state.playhead - clip.start)))));
+    return <label className="inspector-number">Position {axis.toUpperCase()}<input aria-label={`Selection position ${axis.toUpperCase()}`} type="number" min={-2} max={3} step={.01} placeholder="Mixed" value={value ?? ''} onChange={event => {
+      if (!event.target.value) return;
+      const next = Number(event.target.value);
+      if (Number.isFinite(next) && next >= -2 && next <= 3) state.edit(project => editTextPosition(project, clips.map(clip => clip.id), axis, next, state.playhead));
+    }}/></label>;
+  };
+  return <section className="bulk-text-controls"><section className="text-inspector-section"><h3>Position all selected texts</h3><p className="subtle">Change X / Y together, or drag in the preview to move the selection. 0.5 is the center of the frame.</p><div className="inspector-fields">{position('x')}{position('y')}</div></section><h3>Text & caption style</h3><p className="subtle">Changes apply to every selected text clip. Mixed values stay unchanged until you edit that property. Wording and caption timing are preserved.</p>
     <label className="inspector-number">Style preset<select aria-label="Selection style preset" value="" onChange={event => {
       const preset = textStyles[event.target.value] ?? state.project!.captionStyles[event.target.value];
       if (preset) edit(style => { for (const key of ['stroke', 'shadow', 'glow', 'background', 'gradient'] as const) delete style[key]; Object.assign(style, structuredClone({ ...defaultTextStyle, ...preset })); });

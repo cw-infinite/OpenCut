@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { animationAt, loopPresets, textMotion, textPresets } from '../src/renderer/engine/textAnimations';
-import { makeTextClip } from '../src/renderer/engine/text';
+import { animationAt, loopPresets, textMotion, textPresets, motionTemplates } from '../src/renderer/engine/textAnimations';
+import { makeTextClip, textStyles, defaultTextStyle } from '../src/renderer/engine/text';
 import { validateText } from '../src/renderer/engine/textValidation';
 import type { TextAnimation } from '../src/shared/types';
 
@@ -28,3 +28,23 @@ describe('text animation boundaries', () => {
     expect(() => validateText(clip)).toThrow('timing');
   });
 });
+
+ it('offers 50 valid motion templates and 17 valid text styles', () => {
+   expect(motionTemplates).toHaveLength(50);
+   expect(new Set(motionTemplates.map(template => template.name)).size).toBe(50);
+   for (const template of motionTemplates) {
+     const clip = makeTextClip('text', 'track', 0);
+     Object.assign(clip, { animIn: template.animIn, animOut: template.animOut, animLoop: template.animLoop });
+     expect(() => validateText(clip)).not.toThrow();
+     for (const time of [0, 250000, 750000, 2500000, 5000000]) {
+       for (const [animation, phase] of [[clip.animIn, 'in'], [clip.animOut, 'out'], [clip.animLoop, 'loop']] as const) {
+         expect(Object.values(animationAt(animation, time, clip.duration, 2, 4, phase)).every(Number.isFinite)).toBe(true);
+       }
+     }
+   }
+   expect(Object.keys(textStyles)).toHaveLength(17);
+   for (const style of Object.values(textStyles)) {
+     const clip = makeTextClip('text', 'track', 0); clip.style = { ...defaultTextStyle, ...style };
+     expect(() => validateText(clip)).not.toThrow();
+   }
+ });

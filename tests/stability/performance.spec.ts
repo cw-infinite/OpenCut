@@ -36,7 +36,7 @@ test('one-hour five-track timeline sustains half-quality playback and responsive
     });
     await page.getByRole('button', { name: 'Play or pause' }).click();
     await page.waitForTimeout(10000);
-    await page.keyboard.press('Space');
+    await page.getByRole('button', { name: 'Play or pause' }).click();
     const metrics = await page.evaluate(async () => {
       const state = (window as any).__benchmark; state.observer.disconnect();
       const frames: number[] = state.frames.filter((time: number) => time >= state.frames[0] + 1000);

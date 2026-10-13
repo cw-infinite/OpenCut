@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import type { TextAnimation, TextClip } from '../../shared/types';
-import { loopPresets, textPresets } from '../engine/textAnimations';
+import { loopPresets, textPresets, motionTemplates } from '../engine/textAnimations';
 
 export function TextAnimationEditor({ clip, edit }: { clip: TextClip; edit(fn: (clip: TextClip) => void): void }): JSX.Element {
-  return <section><h3>Text animations</h3>{(['animIn', 'animOut', 'animLoop'] as const).map(key => {
+  const [search, setSearch] = useState('');
+  return <section className="text-inspector-section"><h3>Motion graphics · 50 templates</h3><p className="subtle">Apply a title or staggered word animation, then customize its timing below.</p><input aria-label="Search motion templates" placeholder="Search motion templates" value={search} onChange={event => setSearch(event.target.value)}/><div className="motion-template-grid">{motionTemplates.filter(template => template.name.toLowerCase().includes(search.toLowerCase())).map(template => <button key={template.name} title="Apply motion template" onClick={() => edit(clip => { clip.animIn = structuredClone(template.animIn); clip.animOut = structuredClone(template.animOut); if (template.animLoop) clip.animLoop = structuredClone(template.animLoop); else delete clip.animLoop; })}>{template.name}</button>)}</div><button className="secondary" onClick={() => edit(clip => { delete clip.animIn; delete clip.animOut; delete clip.animLoop; })}>Clear animations</button><h3>Animation timing</h3>{(['animIn', 'animOut', 'animLoop'] as const).map(key => {
     const animation = clip[key];
     const update = (fn: (animation: TextAnimation) => void) => edit(clip => { if (clip[key]) fn(clip[key]!); });
     return <div key={key} className="text-animation-controls"><label className="inspector-number">{key === 'animIn' ? 'In' : key === 'animOut' ? 'Out' : 'Loop'}<select aria-label={`${key} preset`} value={animation?.preset ?? ''} onChange={event => edit(clip => {

@@ -1,7 +1,7 @@
 import { it, expect } from 'vitest';
 import { createProject } from '../src/shared/project';
 import { captionClip } from '../src/renderer/engine/captionImport';
-import { commonValue, editTextStyles } from '../src/renderer/engine/bulkText';
+import { commonValue, editTextStyles, editTextPosition } from '../src/renderer/engine/bulkText';
 import { useEditor } from '../src/renderer/state/editor';
 
 function fixture() {
@@ -27,4 +27,27 @@ it('rejects a locked selection before changing any style and reports common/mixe
   const before = structuredClone(project);
   expect(() => editTextStyles(project, ['one', 'three'], style => { style.fontSize = 100; })).toThrow('locked'); expect(project).toEqual(before);
   expect(commonValue([0, 0])).toBe(0); expect(commonValue([false, false])).toBe(false); expect(commonValue(['red', 'blue'])).toBeUndefined();
+});
+
+it('positions selected captions together with local keyframe times and atomic undo', () => {
+  const project = fixture();
+  project.tracks[0].clips[1].transform.x.keyframes = [{ time: 0, value: .5, easing: 'linear' }, { time: 1e6, value: .7, easing: 'linear' }];
+  const before = structuredClone(project); useEditor.getState().load(project);
+  useEditor.getState().edit(project => editTextPosition(project, ['one', 'two'], 'x', .65, 1500000));
+  const changed = useEditor.getState().project!.tracks[0].clips;
+  expect(changed[0].transform.x.value).toBe(.65);
+  expect(changed[1].transform.x.keyframes).toContainEqual({ time: 500000, value: .65, easing: 'linear' });
+  expect(changed[1].transform.x.keyframes[0].value).toBe(.5);
+  expect(changed[1].transform.x.keyframes.at(-1)!.value).toBe(.7);
+  for (let i = 0; i < 2; i++) { expect(changed[i].transform.y).toEqual(before.tracks[0].clips[i].transform.y); expect(changed[i]).toMatchObject({ start: before.tracks[0].clips[i].start, duration: before.tracks[0].clips[i].duration }); }
+  expect(changed[2]).toEqual(before.tracks[0].clips[2]);
+  expect(useEditor.getState().history).toHaveLength(1); useEditor.getState().undo(); expect(useEditor.getState().project).toEqual(before);
+});
+it('rejects locked and invalid position edits before touching any selected caption', () => {
+  const project = fixture(), last = project.tracks[0].clips.pop()!; last.trackId = 'locked';
+  project.tracks.push({ id: 'locked', name: 'Locked', kind: 'text', locked: true, hidden: false, muted: false, clips: [last] });
+  const before = structuredClone(project);
+  expect(() => editTextPosition(project, ['one', 'three'], 'x', .4, 0)).toThrow('locked');
+  expect(() => editTextPosition(project, ['one'], 'y', NaN, 0)).toThrow('position');
+  expect(project).toEqual(before);
 });
