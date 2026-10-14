@@ -2,7 +2,11 @@
 
 A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
 
-**Current build: 0.10.6 — M0–M10 features implemented; stability validation underway.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+**Current build: 0.10.7 — M0–M10 features implemented; stability validation underway.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+
+## New in 0.10.7
+
+The video inspector now groups position/size, framing/mirror, color/effects, playback/tools, motion/transitions and audio into labeled cards, with shortcuts to each section. Crop edges have full names and fit options explain their effect. **Mirror left / right** swaps the picture horizontally; **Flip top / bottom** swaps it vertically. Both controls show their current state and support undo.
 
 ## New in 0.10.6
 

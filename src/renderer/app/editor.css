@@ -212,3 +212,22 @@
 .editor-library .media-thumb { height: 90px; }
 
 .group-position-label { position: absolute; bottom: 100%; left: 0; padding: 3px 7px; background: #c5ef9f; color: #172011; font-size: 12px; white-space: nowrap; }
+
+.media-inspector-section { padding: 14px; margin: 12px 0; border: 1px solid #3b444f; border-radius: 8px; background: #191e25; scroll-margin-top: 10px; }
+.inspector .media-inspector-section > h3 { border: 0; padding: 0 0 8px; margin: 0; color: #dcf2c8; font-size: 15px; }
+.media-inspector-section > .subtle { margin: 0 0 10px; font-size: 13px; }
+.media-inspector-section .inspector-fields { gap: 12px; }
+.media-inspector-section .inspector-number { color: #b8c4d3; }
+.media-property-nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px 0; }
+.media-property-nav button { padding: 8px 4px; border: 1px solid #475362; border-radius: 5px; background: #252d37; font-size: 13px; }
+.media-property-nav button:hover { border-color: #c5ef9f; }
+.mirror-controls { display: grid; gap: 8px; margin: 12px 0; }
+.mirror-controls button { width: 100%; padding: 10px; border: 1px solid #4c5967; border-radius: 5px; text-align: left; }
+.mirror-controls button[aria-pressed="true"] { color: #d7fbbd; background: #304425; border-color: #a2cb7f; }
+.light .media-inspector-section, .light .text-inspector-section { background: #e8edf2; border-color: #b5c2cf; }
+.light .media-property-nav button { background: #e5ebf0; color: #24313c; }
+.light .media-inspector-section .inspector-number { color: #34445b; }
+.inspector .panel-heading span { overflow-wrap: anywhere; }
+
+.media-property-nav { position: sticky; top: 0; z-index: 2; background: #101215; }
+.light .media-property-nav { background: #dce2e9; }

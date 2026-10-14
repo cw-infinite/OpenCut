@@ -14,6 +14,18 @@
 | M9: export and project polish | Automated acceptance passed | Typecheck, 57 unit/integration tests and all 16 desktop tests pass. Sequential 1080p/720p/480p export, TikTok 1080×1920/30, estimates, PNG/JPEG frames and duplicate-safe covers, batch cancel cleanup, silence removal/undo, missing-media relink, markers/groups, synthetic webcam and isolated test-window recording verified. Physical devices/system audio need manual acceptance. |
 | M10 | Automated acceptance passed; broader manual QA pending | Transcript editing, stabilization, motion tracking, subject-following smart reframe, local Piper speech and MODNet portrait background removal. Real-footage quality and broader manual acceptance remain pending. |
 
+## 0.10.7 video inspector
+
+Video/image properties now use labeled cards for position and size, framing and mirror, color/visual effects, playback/clip tools, motion/transitions, audio/volume and linked clips. A sticky shortcut bar jumps to each property group. Crop edges use full labels and fit options explain their behavior. Horizontal **Mirror left / right** and vertical **Flip top / bottom** controls display their enabled state and support undo. Disabled legacy flip effects can be enabled using these controls.
+
+Typecheck, all 81 unit tests and the production build pass. Desktop checks passed for mirror toggling, preview pixels, undo, save/reload and mirrored software MP4 export; audio export and the visual-effects regression also passed. The first mirror test run used an invalid FFmpeg seek timestamp in its verification command; the corrected test passed. Video inspector screenshot reviewed. The packaged 0.10.7 application also passed startup/bundled-tool checks and the complete video-inspector/mirror-export workflow; bundled metadata reports 0.10.7. Portable packaging completed successfully: `dist/0.10.7/OpenCut-0.10.7-x64.exe`.
+
+## 0.10.6 editing improvements
+
+Preview sizing is stable during first drops and zoom; clicking library media opens source playback. Clip trims update live and support cancellation. Gap closing can remove globally empty time or pack a selected track while moving linked clips together. Media and inspector panels are wider and horizontally resizable. Text properties are grouped into sections, with fifty motion-text templates and ten additional style presets. Selected captions/texts can move together by preview drag or shared X/Y controls, including sequential captions at different timeline times.
+
+Typecheck, all 81 unit tests and the production build pass. Packaged startup/bundled-tool checks, caption-group positioning and the full editor-improvements workflow pass. The packaged editor workflow missed a native drag/drop once and passed on its targeted rerun. Portable packaging completed successfully: `dist/0.10.6/OpenCut-0.10.6-x64.exe` (467,066,775 bytes). Packaged metadata reports 0.10.6. Startup and feature checks ran against `win-unpacked/OpenCut.exe`; attempting to attach Playwright directly to the self-extracting portable launcher timed out.
+
 ## 0.10.5 stability pass
 
 Typecheck, all 75 unit/integration tests and all 25 desktop regression tests pass. Decode waits now settle on success, errors, timeout and cancellation. Audio source/gain nodes disconnect on retirement, silent videos avoid unnecessary audio graphs, font-readiness caching is bounded by active text, and tabular timecodes keep playback controls stationary.
