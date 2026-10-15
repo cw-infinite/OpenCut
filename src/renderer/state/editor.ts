@@ -1,3 +1,4 @@
+import { useTextPresets } from './textPresets';
 import { create } from 'zustand';
 import { enablePatches, produceWithPatches, applyPatches, type Patch } from 'immer';
 import type { Project, Clip, Track } from '../../shared/types';
@@ -24,7 +25,7 @@ export const useEditor = create<EditorState>((set, get) => ({
   dragPreview: null,
   sourcePreview: null,
   project: null, selected: [], playhead: 0, playing: false, zoom: 80, snap: true, history: [], future: [], clipboard: [], error: null, dirty: false,
-  load: project => set({ sourcePreview: null, project, dragItem: null, dragPreview: null, selected: [], playhead: 0, playing: false, history: [], future: [], dirty: false }),
+  load: project => { let error: string | null = null; try { useTextPresets.getState().merge(project.captionStyles); } catch (cause) { error = `Could not load shared text styles: ${String(cause)}`; } set({ error, sourcePreview: null, project, dragItem: null, dragPreview: null, selected: [], playhead: 0, playing: false, history: [], future: [], dirty: false }); },
   edit: recipe => {
     const { project, history } = get(); if (!project) return;
     try {
