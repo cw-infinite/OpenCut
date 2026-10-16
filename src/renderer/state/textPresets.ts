@@ -12,14 +12,13 @@ export function readTextPresets(storage: Pick<Storage, 'getItem'>): Record<strin
   }
   return result;
 }
-export const useTextPresets = create<{ styles: Record<string, TextStyle>; merge(styles: Record<string, TextStyle>, overwrite?: boolean): void }>((set, get) => ({
+export const useTextPresets = create<{ styles: Record<string, TextStyle>; merge(styles: Record<string, TextStyle>, overwrite?: boolean): Promise<void> }>((set) => ({
   styles: {},
-  merge: (styles, overwrite = false) => {
-    if (typeof localStorage === 'undefined') return;
-    const saved = readTextPresets(localStorage);
-    const next = overwrite ? { ...saved, ...styles } : { ...styles, ...saved };
-    for (const style of Object.values(next)) validateTextStyle(style);
-    localStorage.setItem(key, JSON.stringify(next));
+  merge: async (styles, overwrite = false) => {
+    if (typeof window === 'undefined' || !window.opencut?.textPresets) return;
+    let legacy: Record<string, TextStyle> = {};
+    try { legacy = readTextPresets(localStorage); } catch { /* Browser storage must not block the native library. */ }
+    const next = await window.opencut.textPresets.merge(overwrite ? styles : { ...legacy, ...styles }, overwrite);
     set({ styles: next });
   }
 }));

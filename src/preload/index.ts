@@ -3,6 +3,7 @@ import type { OpenCutApi, SetupProgress, ImportProgress } from '../shared/api';
 import type { ExportProgress } from '../shared/export';
 import type { CaptionProgress } from '../shared/captions';
 const api: OpenCutApi = {
+  textPresets: { merge: (styles, overwrite) => ipcRenderer.invoke('textPresets:merge', styles, overwrite) },
   creative: {
     status: () => ipcRenderer.invoke('creative:status'),
     setup: kind => ipcRenderer.invoke('creative:setup', kind),

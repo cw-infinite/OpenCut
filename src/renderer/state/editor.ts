@@ -25,7 +25,10 @@ export const useEditor = create<EditorState>((set, get) => ({
   dragPreview: null,
   sourcePreview: null,
   project: null, selected: [], playhead: 0, playing: false, zoom: 80, snap: true, history: [], future: [], clipboard: [], error: null, dirty: false,
-  load: project => { let error: string | null = null; try { useTextPresets.getState().merge(project.captionStyles); } catch (cause) { error = `Could not load shared text styles: ${String(cause)}`; } set({ error, sourcePreview: null, project, dragItem: null, dragPreview: null, selected: [], playhead: 0, playing: false, history: [], future: [], dirty: false }); },
+  load: project => {
+    set({ error: null, sourcePreview: null, project, dragItem: null, dragPreview: null, selected: [], playhead: 0, playing: false, history: [], future: [], dirty: false });
+    void useTextPresets.getState().merge(project.captionStyles).catch(cause => { if (get().project?.id === project.id) set({ error: `Could not load shared text styles: ${String(cause)}` }); });
+  },
   edit: recipe => {
     const { project, history } = get(); if (!project) return;
     try {

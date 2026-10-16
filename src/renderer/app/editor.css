@@ -231,3 +231,10 @@
 
 .media-property-nav { position: sticky; top: 0; z-index: 2; background: #101215; }
 .light .media-property-nav { background: #dce2e9; }
+
+/* Give portrait footage height while retaining the timeline and inspector. */
+.editor-top.large-preview-layout { height: max(440px, calc(100vh - 270px)); }
+.large-preview-layout > .editor-library, .large-preview-layout > .editor-library + .panel-resizer { display: none; }
+.ruler { touch-action: none; user-select: none; }
+.playhead span { pointer-events: auto; cursor: ew-resize; touch-action: none; width: 18px; height: 28px; margin-left: -9px; }
+.playhead span:focus-visible { background: #ffffff; }
