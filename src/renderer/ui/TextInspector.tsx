@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { TextClip, TextStyle } from '../../shared/types';
+import { useTextPresets } from '../state/textPresets';
 import { useEditor } from '../state/editor';
 import { editable } from '../engine/timeline';
 import { evaluate, setAnimatedValue } from '../engine/keyframes';
@@ -8,7 +9,9 @@ import { KeyframeEditor } from './KeyframeEditor';
 import { TextAnimationEditor } from './TextAnimationEditor';
 
 export function TextInspector({ clip }: { clip: TextClip }): JSX.Element {
-  const state = useEditor(), [fonts, setFonts] = useState(bundledFonts), [styleName, setStyleName] = useState('My style');
+  const savedStyles = useTextPresets(value => value.styles);
+  const presets = { ...textStyles, ...useEditor.getState().project!.captionStyles, ...savedStyles };
+  const state = useEditor(), [fonts, setFonts] = useState(bundledFonts), [styleName, setStyleName] = useState('My style'), [savingStyle, setSavingStyle] = useState(false), [savedName, setSavedName] = useState('');
   useEffect(() => { void window.opencut.fonts().then(system => setFonts([...new Set([...bundledFonts, ...system])])).catch(() => {}); }, []);
   const edit = (fn: (clip: TextClip) => void) => state.edit(project => fn(editable(project, clip.id).clip as TextClip));
   const time = Math.max(0, Math.min(clip.duration, state.playhead - clip.start));
@@ -17,9 +20,18 @@ export function TextInspector({ clip }: { clip: TextClip }): JSX.Element {
   const style = (fn: (style: TextStyle) => void) => edit(clip => fn(clip.style));
   return <><div className="panel-heading"><h2>Text</h2><span>Title & typography</span></div>
     <section className="text-inspector-section"><h3>Content & presets</h3><textarea aria-label="Text content" className="text-content" value={clip.content} onChange={event => edit(clip => { clip.content = event.target.value; if (clip.caption) clip.caption.words = []; })}/>
-    <label className="inspector-number">Style preset<select aria-label="Text style preset" value="" onChange={event => { const preset = textStyles[event.target.value] ?? state.project!.captionStyles[event.target.value]; if (preset) edit(clip => { clip.style = structuredClone({ ...defaultTextStyle, ...preset }); }); }}><option value="">Choose a style</option>{[...Object.keys(textStyles), ...Object.keys(state.project!.captionStyles)].map(name => <option key={name}>{name}</option>)}</select></label>
-    <div className="inspector-fields"><input aria-label="Saved style name" value={styleName} onChange={event => setStyleName(event.target.value)}/><button className="secondary" onClick={() => { if (styleName.trim()) state.edit(project => { project.captionStyles[styleName.trim().slice(0, 80)] = structuredClone(clip.style); }); }}>Save style</button></div>
-    </section><section className="text-inspector-section"><h3>Typography & layout</h3><label className="inspector-number">Font<select aria-label="Font family" value={clip.style.fontFamily} onChange={event => style(value => { value.fontFamily = event.target.value; })}>{fonts.map(font => <option key={font}>{font}</option>)}</select></label>
+    <label className="inspector-number">Style preset<select aria-label="Text style preset" value="" onChange={event => { const preset = presets[event.target.value]; if (preset) edit(clip => { clip.style = structuredClone({ ...defaultTextStyle, ...preset }); }); }}><option value="">Choose a style</option>{Object.keys(presets).map(name => <option key={name}>{name}</option>)}</select></label>
+    <div className="inspector-fields"><input aria-label="Saved style name" value={styleName} onChange={event => setStyleName(event.target.value)}/><button className="secondary" disabled={savingStyle || !styleName.trim()} onClick={async () => {
+      const name = styleName.trim().slice(0, 80), style = structuredClone(clip.style), projectId = state.project!.id;
+      setSavingStyle(true); setSavedName('');
+      try {
+        await useTextPresets.getState().merge({ [name]: style }, true);
+        if (useEditor.getState().project?.id === projectId) state.edit(project => { project.captionStyles[name] = style; });
+        setSavedName(name);
+      } catch (error) { useEditor.setState({ error: `Could not save shared style: ${String(error)}` }); }
+      finally { setSavingStyle(false); }
+    }}>{savingStyle ? 'Saving¡¦' : 'Save style'}</button></div>
+    <p role="status">{savedName ? `¡°${savedName}¡± saved for all projects.` : ''}</p><p className="subtle">Saved styles are available in all projects on this computer.</p></section><section className="text-inspector-section"><h3>Typography & layout</h3><label className="inspector-number">Font<select aria-label="Font family" value={clip.style.fontFamily} onChange={event => style(value => { value.fontFamily = event.target.value; })}>{fonts.map(font => <option key={font}>{font}</option>)}</select></label>
     <div className="inspector-fields">{number('Font size', clip.style.fontSize, value => style(style => { style.fontSize = value; }), 6, 500)}
       <label className="inspector-number">Weight<select aria-label="Font weight" value={clip.style.weight} onChange={event => style(value => { value.weight = Number(event.target.value) as TextStyle['weight']; })}>{[400, 500, 600, 700, 800, 900].map(weight => <option key={weight}>{weight}</option>)}</select></label>
       {color('Text color', clip.style.color, value => style(style => { style.color = value; }))}

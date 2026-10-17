@@ -1,4 +1,4 @@
-import type { Project, MediaAsset } from './types';
+import type { Project, MediaAsset, TextStyle } from './types';
 import type { ExportRequest, ExportProgress, ExportWork } from './export';
 import type { CaptionRequest, CaptionWord, CaptionProgress } from './captions';
 export interface ProjectSummary { id: string; name: string; updatedAt: string; mediaCount: number; settings: Project['settings']; cover?: string }
@@ -13,6 +13,7 @@ export interface ToolCheck {
 export interface ToolReport { ready: boolean; tools: ToolCheck[]; checkedAt: string }
 export interface SetupProgress { stage: string; percent: number | null; detail: string }
 export interface OpenCutApi {
+  textPresets: { merge(styles: Record<string, TextStyle>, overwrite?: boolean): Promise<Record<string, TextStyle>> };
   creative: {
     status(): Promise<{ speech: boolean; background: boolean }>;
     setup(kind: 'speech' | 'background'): Promise<{ speech: boolean; background: boolean }>;
