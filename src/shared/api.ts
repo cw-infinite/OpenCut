@@ -13,7 +13,7 @@ export interface ToolCheck {
 export interface ToolReport { ready: boolean; tools: ToolCheck[]; checkedAt: string }
 export interface SetupProgress { stage: string; percent: number | null; detail: string }
 export interface OpenCutApi {
-  textPresets: { merge(styles: Record<string, TextStyle>, overwrite?: boolean): Promise<Record<string, TextStyle>> };
+  textPresets: { remove(name: string): Promise<Record<string, TextStyle>>; merge(styles: Record<string, TextStyle>, overwrite?: boolean): Promise<Record<string, TextStyle>> };
   creative: {
     status(): Promise<{ speech: boolean; background: boolean }>;
     setup(kind: 'speech' | 'background'): Promise<{ speech: boolean; background: boolean }>;

@@ -47,10 +47,13 @@ it('persists presets in native application data, recovers unopened project prese
       presets.merge({ Shared: { ...defaultTextStyle, fontSize: 80 } }, true),
       presets.merge({ Another: defaultTextStyle }, true)
     ]);
+    await presets.merge({}, false, 'Legacy');
     const fresh = new TextPresetStore(projects);
     const saved = await fresh.merge({ Shared: defaultTextStyle });
     expect(saved.Shared.fontSize).toBe(80);
-    expect(saved.Legacy.fontSize).toBe(50);
+    expect(saved.Legacy).toBeUndefined();
+    expect((await fresh.merge({ Legacy: defaultTextStyle })).Legacy).toBeUndefined();
+    expect((await fresh.merge({ Legacy: defaultTextStyle }, true)).Legacy).toEqual(defaultTextStyle);
     expect(saved.Another).toEqual(defaultTextStyle);
     await expect(fresh.merge({ Invalid: { ...defaultTextStyle, fontSize: -1 } }, true)).rejects.toThrow();
     expect((await fresh.merge({})).Shared.fontSize).toBe(80);

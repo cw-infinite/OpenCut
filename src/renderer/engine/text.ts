@@ -2,7 +2,7 @@ import type { TextClip, TextStyle } from '../../shared/types';
 import { constant } from './timeline';
 
 export const bundledFonts = ['Inter', 'Roboto', 'Montserrat', 'Poppins', 'Oswald', 'Anton', 'Bebas Neue', 'Lobster', 'Pacifico', 'Permanent Marker', 'Playfair Display', 'Roboto Mono'];
-export const defaultTextStyle: TextStyle = { fontFamily: 'Inter', fontSize: 80, weight: 700, italic: false, color: '#ffffff', align: 'center', lineHeight: 1.2, letterSpacing: 0, maxWidthFraction: .8 };
+export const defaultTextStyle: TextStyle = { transparentFill: false, fontFamily: 'Inter', fontSize: 80, weight: 700, italic: false, color: '#ffffff', align: 'center', lineHeight: 1.2, letterSpacing: 0, maxWidthFraction: .8 };
 export const textStyles: Record<string, Partial<TextStyle>> = {
   'Cinema gold': { fontFamily: 'Bebas Neue', fontSize: 110, color: '#f7cf75', letterSpacing: 5, shadow: { color: '#000000', blur: 12, offsetX: 0, offsetY: 4 } },
   'Editorial serif': { fontFamily: 'Playfair Display', fontSize: 92, weight: 400, color: '#fff0dc' },

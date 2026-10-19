@@ -141,9 +141,9 @@ function drawTextBase(ctx: CanvasRenderingContext2D, clip: TextClip, time: numbe
       ctx.filter = blur || hue ? `blur(${blur * s}px) hue-rotate(${hue}deg)` : 'none';
       ctx.fillStyle = caption.active && clip.caption?.preset === 'karaoke' ? '#baff72' : caption.active && clip.caption?.preset === 'box' ? '#14171d' : fill;
       if (style.shadow) { ctx.shadowColor = style.shadow.color; ctx.shadowBlur = style.shadow.blur * s; ctx.shadowOffsetX = style.shadow.offsetX * s; ctx.shadowOffsetY = style.shadow.offsetY * s; }
-      if (style.glow) { ctx.save(); ctx.shadowColor = style.glow.color; ctx.shadowBlur = style.glow.blur * s; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; ctx.fillText(glyph.char, glyph.x, glyph.y); ctx.restore(); }
+      if (style.glow && !style.transparentFill) { ctx.save(); ctx.shadowColor = style.glow.color; ctx.shadowBlur = style.glow.blur * s; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; ctx.fillText(glyph.char, glyph.x, glyph.y); ctx.restore(); }
       if (style.stroke && !(caption.active && clip.caption?.preset === 'box')) { ctx.strokeStyle = style.stroke.color; ctx.lineWidth = style.stroke.width * s; ctx.strokeText(glyph.char, glyph.x, glyph.y); }
-      ctx.fillText(glyph.char, glyph.x, glyph.y);
+      if (!style.transparentFill) ctx.fillText(glyph.char, glyph.x, glyph.y);
     }
     ctx.restore();
   }

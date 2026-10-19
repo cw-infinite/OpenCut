@@ -100,3 +100,14 @@ describe('integer-time timeline', () => {
    expect(project.tracks[0].clips.map(clip => clip.start)).toEqual([0, 4e6]);
    expect(project.tracks[1].clips[0].start).toBe(0); validateTimeline(project);
  });
+
+it('closes gaps down to one microsecond exactly on a track covered by audio', () => {
+  for (const gap of [1, 1000, 33333, 500000, 999999]) {
+    const project = fixture(); splitClip(project, 'clip', 4e6, 'right');
+    project.tracks[0].clips[1].start += gap;
+    const bed = makeTrack('bed', 'audio', 'Bed'); bed.clips.push(makeMediaClip('bed-clip', project.media.video, bed.id, 0)); project.tracks.push(bed);
+    closeTrackGaps(project, 'track');
+    expect(project.tracks[0].clips[1].start).toBe(4e6);
+    validateTimeline(project);
+  }
+});

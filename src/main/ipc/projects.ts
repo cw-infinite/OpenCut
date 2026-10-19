@@ -13,6 +13,7 @@ export function projectHandlers(store: ProjectStore, library: MediaLibrary, trus
   const handle = (channel: string, fn: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown) =>
     ipcMain.handle(channel, (event, ...args) => { trusted(event); return fn(event, ...args); });
   const textPresets = new TextPresetStore(store);
+  handle('textPresets:remove', (_event, name) => textPresets.merge({}, false, name));
   handle('textPresets:merge', (_event, styles, overwrite) => textPresets.merge(styles, overwrite));
   let fonts: Promise<string[]> | undefined;
   handle('fonts:list', () => fonts ??= runProcess('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Add-Type -AssemblyName System.Drawing; (New-Object System.Drawing.Text.InstalledFontCollection).Families.Name | ConvertTo-Json -Compress'], 15000)

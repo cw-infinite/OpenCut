@@ -12,8 +12,9 @@ export function readTextPresets(storage: Pick<Storage, 'getItem'>): Record<strin
   }
   return result;
 }
-export const useTextPresets = create<{ styles: Record<string, TextStyle>; merge(styles: Record<string, TextStyle>, overwrite?: boolean): Promise<void> }>((set) => ({
+export const useTextPresets = create<{ styles: Record<string, TextStyle>; remove(name: string): Promise<void>; merge(styles: Record<string, TextStyle>, overwrite?: boolean): Promise<void> }>((set) => ({
   styles: {},
+  remove: async name => { const styles = await window.opencut.textPresets.remove(name); set({ styles }); },
   merge: async (styles, overwrite = false) => {
     if (typeof window === 'undefined' || !window.opencut?.textPresets) return;
     let legacy: Record<string, TextStyle> = {};

@@ -79,6 +79,7 @@ export interface Keyframe<T> { time: Us; value: T; easing: 'linear'|'easeIn'|'ea
 export interface TextStyle {
   fontFamily: string; fontSize: number;       // px at 1080p reference height; scale with canvas
   weight: 400|500|600|700|800|900; italic: boolean;
+  transparentFill?: boolean;
   color: string; align: 'left'|'center'|'right';
   lineHeight: number; letterSpacing: number;
   stroke?: { color: string; width: number };

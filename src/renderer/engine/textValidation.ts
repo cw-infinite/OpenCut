@@ -9,6 +9,7 @@ export function validateTextStyle(style: TextStyle): void {
   if (!style || typeof style.fontFamily !== 'string' || !style.fontFamily.trim() || style.fontFamily.length > 200) throw new Error('Invalid font family');
   numeric(style.fontSize, 6, 500); numeric(style.lineHeight, .5, 3); numeric(style.letterSpacing, -10, 50); numeric(style.maxWidthFraction, .1, 1);
   if (![400, 500, 600, 700, 800, 900].includes(style.weight) || !['left', 'center', 'right'].includes(style.align) || typeof style.italic !== 'boolean') throw new Error('Invalid typography');
+  if (style.transparentFill !== undefined && typeof style.transparentFill !== 'boolean') throw new Error('Invalid text fill');
   color(style.color);
   if (style.stroke) { color(style.stroke.color); numeric(style.stroke.width, 0, 30); }
   if (style.shadow) { color(style.shadow.color); numeric(style.shadow.blur, 0, 100); numeric(style.shadow.offsetX, -100, 100); numeric(style.shadow.offsetY, -100, 100); }

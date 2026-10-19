@@ -238,3 +238,7 @@
 .ruler { touch-action: none; user-select: none; }
 .playhead span { pointer-events: auto; cursor: ew-resize; touch-action: none; width: 18px; height: 28px; margin-left: -9px; }
 .playhead span:focus-visible { background: #ffffff; }
+
+.preview-layout-button { border: 1px solid #b5e88c; background: #d1f3a8; color: #14200c; border-radius: 7px; padding: 9px 14px; font-weight: 700; cursor: pointer; }
+.preview-layout-button:hover { background: #e6ffd0; }
+.designed-text-presets button { min-height: 64px; border: 1px solid #65794e; border-radius: 7px; background: #283122; padding: 10px; }

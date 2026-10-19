@@ -14,7 +14,7 @@ const gradient = { from: '#ffffff', to: '#baff72', angle: 90 };
 
 export function BulkTextInspector({ clips }: { clips: TextClip[] }): JSX.Element {
   const savedStyles = useTextPresets(value => value.styles);
-  const presets = { ...textStyles, ...useEditor.getState().project!.captionStyles, ...savedStyles };
+  const presets = { ...textStyles, ...savedStyles };
   const state = useEditor(), [fonts, setFonts] = useState(bundledFonts);
   useEffect(() => { let alive = true; void window.opencut.fonts().then(system => { if (alive) setFonts([...new Set([...bundledFonts, ...system])]); }).catch(() => {}); return () => { alive = false; }; }, []);
   const read = <T,>(get: (style: TextStyle) => T) => commonValue(clips.map(clip => get(clip.style)));
@@ -47,6 +47,7 @@ export function BulkTextInspector({ clips }: { clips: TextClip[] }): JSX.Element
     <div className="inspector-fields">
       {number('Font size', style => style.fontSize, (style, value) => { style.fontSize = value; }, 6, 500)}
       {select('Font weight', read(style => style.weight), [400, 500, 600, 700, 800, 900], (style, value) => { style.weight = Number(value) as TextStyle['weight']; })}
+      {check('Transparent text fill', style => Boolean(style.transparentFill), (style, value) => { style.transparentFill = value; })}
       {color('Text color', style => style.color, (style, value) => { style.color = value; })}
       {check('Italic', style => style.italic, (style, value) => { style.italic = value; })}
       {select('Alignment', read(style => style.align), ['left', 'center', 'right'], (style, value) => { style.align = value as TextStyle['align']; })}

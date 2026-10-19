@@ -10,8 +10,8 @@ import { TextAnimationEditor } from './TextAnimationEditor';
 
 export function TextInspector({ clip }: { clip: TextClip }): JSX.Element {
   const savedStyles = useTextPresets(value => value.styles);
-  const presets = { ...textStyles, ...useEditor.getState().project!.captionStyles, ...savedStyles };
-  const state = useEditor(), [fonts, setFonts] = useState(bundledFonts), [styleName, setStyleName] = useState('My style'), [savingStyle, setSavingStyle] = useState(false), [savedName, setSavedName] = useState('');
+  const presets = { ...textStyles, ...savedStyles };
+  const state = useEditor(), [fonts, setFonts] = useState(bundledFonts), [styleName, setStyleName] = useState('My style'), [savingStyle, setSavingStyle] = useState(false), [savedName, setSavedName] = useState(''), [removeName, setRemoveName] = useState('');
   useEffect(() => { void window.opencut.fonts().then(system => setFonts([...new Set([...bundledFonts, ...system])])).catch(() => {}); }, []);
   const edit = (fn: (clip: TextClip) => void) => state.edit(project => fn(editable(project, clip.id).clip as TextClip));
   const time = Math.max(0, Math.min(clip.duration, state.playhead - clip.start));
@@ -19,7 +19,8 @@ export function TextInspector({ clip }: { clip: TextClip }): JSX.Element {
   const color = (label: string, value: string, change: (value: string) => void) => <label className="inspector-number">{label}<input aria-label={label} type="color" value={value} onChange={event => change(event.target.value)}/></label>;
   const style = (fn: (style: TextStyle) => void) => edit(clip => fn(clip.style));
   return <><div className="panel-heading"><h2>Text</h2><span>Title & typography</span></div>
-    <section className="text-inspector-section"><h3>Content & presets</h3><textarea aria-label="Text content" className="text-content" value={clip.content} onChange={event => edit(clip => { clip.content = event.target.value; if (clip.caption) clip.caption.words = []; })}/>
+    <nav className="media-property-nav" aria-label="Text property sections">{[['content', 'Presets'], ['typography', 'Typography'], ['appearance', 'Appearance'], ['transform', 'Position'], ['animation', 'Animation'], ['keyframes', 'Keyframes']].map(([id, label]) => <button key={id} onClick={event => event.currentTarget.closest('aside')!.querySelector(`[data-text-section="${id}"]`)?.scrollIntoView({ block: 'start', behavior: 'smooth' })}>{label}</button>)}</nav>
+    <section data-text-section="content" className="text-inspector-section"><h3>Content & presets</h3><textarea aria-label="Text content" className="text-content" value={clip.content} onChange={event => edit(clip => { clip.content = event.target.value; if (clip.caption) clip.caption.words = []; })}/>
     <label className="inspector-number">Style preset<select aria-label="Text style preset" value="" onChange={event => { const preset = presets[event.target.value]; if (preset) edit(clip => { clip.style = structuredClone({ ...defaultTextStyle, ...preset }); }); }}><option value="">Choose a style</option>{Object.keys(presets).map(name => <option key={name}>{name}</option>)}</select></label>
     <div className="inspector-fields"><input aria-label="Saved style name" value={styleName} onChange={event => setStyleName(event.target.value)}/><button className="secondary" disabled={savingStyle || !styleName.trim()} onClick={async () => {
       const name = styleName.trim().slice(0, 80), style = structuredClone(clip.style), projectId = state.project!.id;
@@ -30,17 +31,19 @@ export function TextInspector({ clip }: { clip: TextClip }): JSX.Element {
         setSavedName(name);
       } catch (error) { useEditor.setState({ error: `Could not save shared style: ${String(error)}` }); }
       finally { setSavingStyle(false); }
-    }}>{savingStyle ? 'Saving°¶' : 'Save style'}</button></div>
-    <p role="status">{savedName ? `°∞${savedName}°± saved for all projects.` : ''}</p><p className="subtle">Saved styles are available in all projects on this computer.</p></section><section className="text-inspector-section"><h3>Typography & layout</h3><label className="inspector-number">Font<select aria-label="Font family" value={clip.style.fontFamily} onChange={event => style(value => { value.fontFamily = event.target.value; })}>{fonts.map(font => <option key={font}>{font}</option>)}</select></label>
+    }}>{savingStyle ? 'Saving‚Ä¶' : 'Save style'}</button></div>
+    <div className="inspector-fields"><select aria-label="Saved preset to remove" value={removeName} onChange={event => setRemoveName(event.target.value)}><option value="">Choose saved preset</option>{Object.keys(savedStyles).map(name => <option key={name}>{name}</option>)}</select><button className="secondary" disabled={!removeName || savingStyle} onClick={async () => { setSavingStyle(true); try { await useTextPresets.getState().remove(removeName); setRemoveName(''); setSavedName(''); } catch (error) { useEditor.setState({ error: `Could not remove preset: ${String(error)}` }); } finally { setSavingStyle(false); } }}>Remove preset</button></div>
+    <p role="status">{savedName ? `‚Äú${savedName}‚Äù saved for all projects.` : ''}</p><p className="subtle">Saved styles are available in all projects on this computer.</p></section><section data-text-section="typography" className="text-inspector-section"><h3>Typography & layout</h3><label className="inspector-number">Font<select aria-label="Font family" value={clip.style.fontFamily} onChange={event => style(value => { value.fontFamily = event.target.value; })}>{fonts.map(font => <option key={font}>{font}</option>)}</select></label>
     <div className="inspector-fields">{number('Font size', clip.style.fontSize, value => style(style => { style.fontSize = value; }), 6, 500)}
       <label className="inspector-number">Weight<select aria-label="Font weight" value={clip.style.weight} onChange={event => style(value => { value.weight = Number(event.target.value) as TextStyle['weight']; })}>{[400, 500, 600, 700, 800, 900].map(weight => <option key={weight}>{weight}</option>)}</select></label>
+      <label className="check-row"><input aria-label="Transparent text fill" type="checkbox" checked={Boolean(clip.style.transparentFill)} onChange={event => style(value => { value.transparentFill = event.target.checked; })}/>Transparent fill (keep outline)</label>
       {color('Text color', clip.style.color, value => style(style => { style.color = value; }))}
       <label className="check-row"><input type="checkbox" checked={clip.style.italic} onChange={event => style(value => { value.italic = event.target.checked; })}/> Italic</label>
       <label className="inspector-number">Alignment<select aria-label="Text alignment" value={clip.style.align} onChange={event => style(value => { value.align = event.target.value as TextStyle['align']; })}>{['left', 'center', 'right'].map(align => <option key={align}>{align}</option>)}</select></label>
       {number('Line height', clip.style.lineHeight, value => style(style => { style.lineHeight = value; }), .5, 3, .1)}
       {number('Letter spacing', clip.style.letterSpacing, value => style(style => { style.letterSpacing = value; }), -10, 50, .5)}
       {number('Wrap width', clip.style.maxWidthFraction, value => style(style => { style.maxWidthFraction = value; }), .1, 1, .05)}
-    </div></section><section className="text-inspector-section"><h3>Appearance</h3>
+    </div></section><section data-text-section="appearance" className="text-inspector-section"><h3>Appearance</h3>
     {(['stroke', 'shadow', 'glow', 'background', 'gradient'] as const).map(key => <label className="check-row" key={key}><input aria-label={`Enable text ${key}`} type="checkbox" checked={Boolean(clip.style[key])} onChange={event => style(value => {
       if (!event.target.checked) delete value[key]; else Object.assign(value, { [key]: key === 'stroke' ? { color: '#000000', width: 3 } : key === 'shadow' ? { color: '#000000', blur: 6, offsetX: 3, offsetY: 3 } : key === 'glow' ? { color: '#baff72', blur: 15 } : key === 'background' ? { color: '#101113', opacity: .8, paddingX: 20, paddingY: 12, radius: 8 } : { from: '#ffffff', to: '#baff72', angle: 90 } });
     })}/>{key}</label>)}
@@ -50,10 +53,10 @@ export function TextInspector({ clip }: { clip: TextClip }): JSX.Element {
       {clip.style.glow && <>{color('Glow color', clip.style.glow.color, value => style(style => { style.glow!.color = value; }))}{number('Glow blur', clip.style.glow.blur, value => style(style => { style.glow!.blur = value; }), 0, 100)}</>}
       {clip.style.background && <>{color('Box color', clip.style.background.color, value => style(style => { style.background!.color = value; }))}{number('Box opacity', clip.style.background.opacity, value => style(style => { style.background!.opacity = value; }), 0, 1, .05)}{number('Padding X', clip.style.background.paddingX, value => style(style => { style.background!.paddingX = value; }), 0, 100)}{number('Padding Y', clip.style.background.paddingY, value => style(style => { style.background!.paddingY = value; }), 0, 100)}{number('Corner radius', clip.style.background.radius, value => style(style => { style.background!.radius = value; }), 0, 100)}</>}
       {clip.style.gradient && <>{color('Gradient from', clip.style.gradient.from, value => style(style => { style.gradient!.from = value; }))}{color('Gradient to', clip.style.gradient.to, value => style(style => { style.gradient!.to = value; }))}{number('Gradient angle', clip.style.gradient.angle, value => style(style => { style.gradient!.angle = value; }), -360, 360)}</>}
-    </div></section><section className="text-inspector-section"><h3>Transform & timing</h3><div className="inspector-fields">
+    </div></section><section data-text-section="transform" className="text-inspector-section"><h3>Transform & timing</h3><div className="inspector-fields">
       {(['x', 'y', 'scale', 'rotation'] as const).map(name => number(`Text ${name}`, evaluate(clip.transform[name], time), value => edit(clip => setAnimatedValue(clip.transform[name], time, value)), name === 'scale' ? .01 : -360, name === 'scale' ? 10 : 360, .01))}
       {number('Text opacity', evaluate(clip.opacity, time), value => edit(clip => setAnimatedValue(clip.opacity, time, value)), 0, 1, .05)}
       {number('Text duration', clip.duration / 1e6, value => edit(clip => { clip.duration = Math.round(value * 1e6); }), .01, 3600, .1)}
-    </div></section><TextAnimationEditor clip={clip} edit={edit}/><section className="text-inspector-section"><KeyframeEditor clip={clip}/></section>
+    </div></section><TextAnimationEditor clip={clip} edit={edit}/><section data-text-section="keyframes" className="text-inspector-section"><KeyframeEditor clip={clip}/></section>
   </>;
 }
