@@ -49,10 +49,10 @@ test('stable first video drop, source playback, live trim, gap close, panel resi
     await page.mouse.move(resizer.x + 3, resizer.y + 80); await page.mouse.down(); await page.mouse.move(resizer.x + 63, resizer.y + 80, { steps: 8 }); await page.mouse.up();
     await expect.poll(async () => (await library.boundingBox())!.width).toBeGreaterThan(width + 20);
     await page.getByRole('button', { name: 'Add text', exact: true }).click();
-    await expect(page.locator('.motion-template-grid button')).toHaveCount(50);
-    await expect(page.getByLabel('Text style preset').locator('option')).toHaveCount(18);
-    await page.getByRole('button', { name: 'Spiral words', exact: true }).click(); await expect(page.getByLabel('animIn preset', { exact: true })).toHaveValue('spiral');
-    await page.getByLabel('Text style preset').selectOption('Cinema gold'); await expect(page.getByLabel('Font family')).toHaveValue('Bebas Neue');
+    await expect(page.locator('.text-preset-card')).toHaveCount(6);
+    await expect(page.getByLabel('Text style preset').locator('option')).toHaveCount(5);
+    await page.getByRole('button', { name: 'Apply Creator captions', exact: true }).click(); await expect(page.getByLabel('animIn preset', { exact: true })).toHaveValue('focusLift');
+    await page.getByLabel('Text style preset').selectOption('Bold title'); await expect(page.getByLabel('Font family')).toHaveValue('Montserrat');
     await page.locator('.inspector').evaluate(element => { element.scrollTop = 0; });
     await page.locator('.editor-library').evaluate(element => { element.scrollTop = 0; });
     await page.screenshot({ path: 'test-results/editor-improvements.png', fullPage: true });
