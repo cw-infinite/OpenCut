@@ -1,7 +1,7 @@
-import type { Project, MediaAsset, TextStyle } from './types';
+import type { Project, MediaAsset, SavedTextPreset } from './types';
 import type { ExportRequest, ExportProgress, ExportWork } from './export';
 import type { CaptionRequest, CaptionWord, CaptionProgress } from './captions';
-export interface ProjectSummary { id: string; name: string; updatedAt: string; mediaCount: number; settings: Project['settings']; cover?: string }
+export interface ProjectSummary { id: string; name: string; updatedAt: string; mediaCount: number; duration: number; settings: Project['settings']; cover?: string }
 export interface MediaView { asset: MediaAsset; url: string; thumbnail?: string; peaks: number[]; missing?: boolean }
 export interface ImportProgress { projectId: string; name: string; stage: string; percent: number; error?: string }
 export interface ToolCheck {
@@ -13,7 +13,7 @@ export interface ToolCheck {
 export interface ToolReport { ready: boolean; tools: ToolCheck[]; checkedAt: string }
 export interface SetupProgress { stage: string; percent: number | null; detail: string }
 export interface OpenCutApi {
-  textPresets: { remove(name: string): Promise<Record<string, TextStyle>>; merge(styles: Record<string, TextStyle>, overwrite?: boolean): Promise<Record<string, TextStyle>> };
+  textPresets: { remove(name: string): Promise<Record<string, SavedTextPreset>>; merge(styles: Record<string, SavedTextPreset>, overwrite?: boolean): Promise<Record<string, SavedTextPreset>> };
   creative: {
     status(): Promise<{ speech: boolean; background: boolean }>;
     setup(kind: 'speech' | 'background'): Promise<{ speech: boolean; background: boolean }>;

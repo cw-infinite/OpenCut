@@ -1,0 +1,53 @@
+import { test, expect, _electron as electron } from '@playwright/test';
+import { makeTextClip } from '../../src/renderer/engine/text';
+import { resolve } from 'node:path';
+import { randomUUID } from 'node:crypto';
+test('project views, metadata, search, duplicate and open', async () => {
+  const app = await electron.launch({ args: ['.'], env: { ...process.env, OPENCUT_TEST_DATA: resolve('.test-data/project-views-' + randomUUID()) } });
+  try {
+    const page = await app.firstWindow();
+    await page.evaluate(async clip => {
+      const project = await window.opencut.projects.create('Summer Trip', { width: 1920, height: 1080, fps: 30, sampleRate: 48000 });
+      project.tracks = [{ id: 'text', name: 'Text', kind: 'text', hidden: false, muted: false, locked: false, clips: [{ ...clip, start: 1000000, duration: 2500000 }] }];
+      await window.opencut.projects.saveEdit(project);
+      await window.opencut.projects.create('Portrait Interview', { width: 1080, height: 1920, fps: 60, sampleRate: 48000 });
+    }, makeTextClip('clip', 'text', 0));
+    await page.getByRole('button', { name: 'Open projects', exact: true }).click();
+    await page.getByRole('button', { name: 'Projects', exact: true }).click();
+    await expect(page.locator('.project-card')).toHaveCount(2);
+    await page.getByLabel('Search projects').fill('  SUMMER ');
+    await expect(page.locator('.project-card')).toHaveCount(1);
+    await expect(page.locator('.project-card')).toContainText('00:00:03.500');
+    await page.getByRole('button', { name: 'Simple list', exact: true }).click();
+    await expect(page.locator('.project-simple-list li')).toHaveCount(1);
+    await expect(page.locator('.project-duration')).toHaveText('00:00:03.500');
+    await page.getByRole('button', { name: 'Detailed list', exact: true }).click();
+    await expect(page.locator('.project-table tbody tr')).toHaveCount(1);
+    await expect(page.locator('.project-table tbody')).toContainText('1920 × 1080');
+    await expect(page.locator('.project-table tbody')).toContainText('16:9');
+    await expect(page.locator('.project-duration')).toHaveText('00:00:03.500');
+    await page.getByLabel('Search projects').fill('not found');
+    await expect(page.getByRole('heading', { name: 'No matching projects' })).toBeVisible();
+    await page.getByRole('button', { name: 'Clear search', exact: true }).click();
+    await expect(page.locator('.project-table tbody tr')).toHaveCount(2);
+    await page.getByRole('button', { name: 'Duplicate Summer Trip', exact: true }).click();
+    await expect(page.locator('.project-table tbody tr')).toHaveCount(3);
+    await page.getByRole('button', { name: 'Summer Trip copy', exact: true }).click();
+    await expect(page.locator('.project-title')).toHaveText('Summer Trip copy');
+    await page.getByRole('button', { name: 'Projects', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Detailed list', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await page.screenshot({ path: 'test-results/project-detailed-view.png', fullPage: true });
+    await page.getByRole('button', { name: 'Simple list', exact: true }).click();
+    await page.screenshot({ path: 'test-results/project-simple-view.png', fullPage: true });
+    await page.getByRole('button', { name: 'Rename Summer Trip copy', exact: true }).click();
+    await page.getByLabel('New project name').fill('');
+    await expect(page.getByRole('button', { name: 'Save name', exact: true })).toBeDisabled();
+    await page.getByLabel('New project name').fill('Holiday final');
+    await page.getByRole('button', { name: 'Save name', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.getByLabel('Search projects').fill('holiday');
+    await expect(page.locator('.project-simple-list li')).toHaveCount(1);
+    expect(await page.evaluate(async () => (await window.opencut.projects.list()).some(p => p.name === 'Holiday final' && p.duration === 3500000))).toBe(true);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+  } finally { await app.evaluate(({ app }) => app.exit(0)).catch(() => {}); await app.close().catch(() => {}); }
+});

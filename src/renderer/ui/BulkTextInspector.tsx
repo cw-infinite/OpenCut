@@ -1,3 +1,5 @@
+import { applyTextPreset } from '../engine/savedTextPresets';
+import { editable } from '../engine/timeline';
 import { useEffect, useState } from 'react';
 import type { TextClip, TextStyle } from '../../shared/types';
 import { useTextPresets } from '../state/textPresets';
@@ -41,7 +43,7 @@ export function BulkTextInspector({ clips }: { clips: TextClip[] }): JSX.Element
   return <section className="bulk-text-controls"><section className="text-inspector-section"><h3>Position all selected texts</h3><p className="subtle">Change X / Y together, or drag in the preview to move the selection. 0.5 is the center of the frame.</p><div className="inspector-fields">{position('x')}{position('y')}</div></section><h3>Text & caption style</h3><p className="subtle">Changes apply to every selected text clip. Mixed values stay unchanged until you edit that property. Wording and caption timing are preserved.</p>
     <label className="inspector-number">Style preset<select aria-label="Selection style preset" value="" onChange={event => {
       const preset = presets[event.target.value];
-      if (preset) edit(style => { for (const key of ['stroke', 'shadow', 'glow', 'background', 'gradient'] as const) delete style[key]; Object.assign(style, structuredClone({ ...defaultTextStyle, ...preset })); });
+      if (preset) state.edit(project => { for (const item of clips) applyTextPreset(editable(project, item.id).clip as TextClip, preset); });
     }}><option value="">Choose a style for all</option>{[...new Set(Object.keys(presets))].map(name => <option key={name}>{name}</option>)}</select></label>
     {select('Font family', read(style => style.fontFamily), [...new Set([...fonts, ...clips.map(clip => clip.style.fontFamily)])], (style, value) => { style.fontFamily = value; })}
     <div className="inspector-fields">

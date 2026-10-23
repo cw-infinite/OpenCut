@@ -1,4 +1,4 @@
-import type { TextClip, TextStyle } from '../../shared/types';
+import type { TextClip, TextStyle, SavedTextPreset } from '../../shared/types';
 import { loopPresets, textPresets } from './textAnimations';
 
 const numeric = (value: number, min: number, max: number) => {
@@ -29,5 +29,13 @@ export function validateText(clip: TextClip): void {
     if (!Number.isSafeInteger(animation.duration) || animation.duration < 10000 || animation.duration > 60e6 || !Number.isSafeInteger(animation.stagger) || animation.stagger < 0 || animation.stagger > 10e6) throw new Error('Invalid text animation timing');
     if (typeof animation.easing === 'string') { if (!['linear', 'easeIn', 'easeOut', 'easeInOut', 'hold'].includes(animation.easing)) throw new Error('Invalid text animation easing'); }
     else { if (!Array.isArray(animation.easing?.bezier) || animation.easing.bezier.length !== 4) throw new Error('Invalid text Bezier easing'); animation.easing.bezier.forEach(point => numeric(point, 0, 1)); }
+  }
+}
+
+export function validateSavedTextPreset(preset: SavedTextPreset): void {
+  validateTextStyle(preset);
+  if (preset.animations !== undefined) {
+    if (!preset.animations || typeof preset.animations !== 'object' || Array.isArray(preset.animations)) throw new Error('Invalid saved animation');
+    validateText({ style: preset, content: '', ...preset.animations } as TextClip);
   }
 }

@@ -7,7 +7,7 @@ export interface Project {
   media: Record<string, MediaAsset>;
   tracks: Track[];                  // index 0 = bottom of the visual stack
   markers: { id: string; time: Us; label: string }[];
-  captionStyles: Record<string, TextStyle>;   // user-saved presets
+  captionStyles: Record<string, SavedTextPreset>;   // user-saved presets
 }
 
 export interface MediaAsset {
@@ -89,6 +89,8 @@ export interface TextStyle {
   gradient?: { from: string; to: string; angle: number };
   maxWidthFraction: number;                   // wrap width as fraction of canvas width
 }
+
+export type SavedTextPreset = TextStyle & { animations?: Pick<TextClip, 'animIn' | 'animOut' | 'animLoop'> };
 
 export interface TextAnimation {
   preset: string;                              // key into textAnimations registry (§7.4)

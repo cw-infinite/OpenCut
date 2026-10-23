@@ -242,3 +242,11 @@
 .preview-layout-button { border: 1px solid #b5e88c; background: #d1f3a8; color: #14200c; border-radius: 7px; padding: 9px 14px; font-weight: 700; cursor: pointer; }
 .preview-layout-button:hover { background: #e6ffd0; }
 .designed-text-presets button { min-height: 64px; border: 1px solid #65794e; border-radius: 7px; background: #283122; padding: 10px; }
+
+.designed-text-presets { display:grid; grid-template-columns:1fr; gap:12px; margin:12px 0; }
+.designed-text-presets .text-preset-card { display:flex; flex-direction:column; width:100%; text-align:left; padding:0 0 12px; overflow:hidden; background:#171d26; border:1px solid #414e60; }
+.text-preset-card canvas { width:100%; height:auto; background:radial-gradient(ellipse at 30% 20%, #273346, #0d1118); }
+.text-preset-card strong,.text-preset-card small,.text-preset-card span { padding:0 12px; margin-top:8px; }
+.text-preset-card small { color:#bce79f; font-size:12px; }
+.text-preset-card span { color:#9aa7b9; font-size:12px; line-height:1.5; }
+.text-preset-card:hover,.text-preset-card:focus-visible { border-color:#c5eca6; outline:1px solid #c5eca6; }

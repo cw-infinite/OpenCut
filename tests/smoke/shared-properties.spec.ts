@@ -36,6 +36,8 @@ test('bulk video properties and shared text presets work in the app across resta
     await page.getByLabel('Selection filter preset', { exact: true }).selectOption('Warm');
     await page.getByLabel('Selection gaussian blur', { exact: true }).check();
     await page.locator('[data-clip-id="text1"]').click({ position: { x: 30, y: 30 } });
+    await page.getByRole('button', { name: 'Apply Product focus', exact: true }).click();
+    await page.getByLabel('animLoop preset', { exact: true }).selectOption('float');
     await page.getByLabel('Font size', { exact: true }).fill('88');
     await page.getByLabel('Saved style name').fill('Across projects');
     await page.getByRole('button', { name: 'Save style', exact: true }).click();
@@ -57,6 +59,9 @@ test('bulk video properties and shared text presets work in the app across resta
     await page.locator('[data-clip-id="other"]').click({ position: { x: 30, y: 30 } });
     await page.getByLabel('Text style preset', { exact: true }).selectOption('Across projects');
     await expect(page.getByLabel('Font size', { exact: true })).toHaveValue('88');
+    await expect(page.getByLabel('animIn preset', { exact: true })).toHaveValue('trackingIn');
+    await expect(page.getByLabel('animOut preset', { exact: true })).toHaveValue('fade');
+    await expect(page.getByLabel('animLoop preset', { exact: true })).toHaveValue('float');
   } finally { await app.evaluate(({ app }) => app.exit(0)).catch(() => {}); await app.close().catch(() => {}); }
 });
 

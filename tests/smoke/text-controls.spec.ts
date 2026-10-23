@@ -34,11 +34,11 @@ test('text navigation, transparent fill, animation presets and permanent preset 
     await page.getByLabel('Saved preset to remove').selectOption('Hollow'); await page.getByRole('button', { name: 'Remove preset', exact: true }).click();
     await expect(page.getByLabel('Text style preset').locator('option', { hasText: 'Hollow' })).toHaveCount(0);
     await page.getByRole('navigation', { name: 'Text property sections' }).getByRole('button', { name: 'Animation', exact: true }).click();
-    await page.getByRole('button', { name: 'Neon pulse', exact: true }).click();
-    await expect(page.getByLabel('animIn preset', { exact: true })).toHaveValue('blurIn');
-    await expect(page.getByLabel('animLoop preset', { exact: true })).toHaveValue('pulse');
-    await page.getByRole('button', { name: 'Outline bounce', exact: true }).click();
-    await expect(page.getByLabel('Transparent text fill', { exact: true })).toBeChecked();
+    await page.getByRole('button', { name: 'Apply Creator captions', exact: true }).click();
+    await expect(page.getByLabel('animIn preset', { exact: true })).toHaveValue('focusLift');
+    await expect(page.getByLabel('animLoop preset', { exact: true })).toHaveValue('');
+    await page.getByRole('button', { name: 'Apply Editorial reveal', exact: true }).click();
+    await expect(page.getByLabel('animIn preset', { exact: true })).toHaveValue('maskRise');
     const output = join(root, 'animated.mp4');
     await app.evaluate(({ dialog }, path) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath: path }); }, output);
     await page.getByRole('button', { name: 'Export', exact: true }).click(); await page.getByLabel('Encoder', { exact: true }).selectOption('software');

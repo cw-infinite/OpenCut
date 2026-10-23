@@ -4,7 +4,7 @@ import { defaultTextStyle, textStyles } from './text';
 export const captionPresets = { Karaoke: 'karaoke', 'Word pop': 'wordPop', 'Box highlight': 'box', 'Outline bold': 'outline' } as const;
 export function styleCaption(clip: TextClip, name: string, y: number): void {
   const preset = (captionPresets as Partial<Record<string, NonNullable<TextClip['caption']>['preset']>>)[name] ?? 'plain';
-  clip.style = { ...defaultTextStyle, ...(textStyles[name] ?? textStyles.Subtitle) };
+  clip.style = { ...defaultTextStyle, ...(textStyles[name] ?? { fontSize: 48, weight: 700 as const, stroke: { color: '#000000', width: 3 } }) };
   clip.transform.y = { value: y, keyframes: [] };
   if (clip.caption) clip.caption.preset = preset;
   if (preset !== 'plain') { delete clip.animIn; delete clip.animOut; delete clip.animLoop; }

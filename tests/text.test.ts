@@ -29,7 +29,7 @@ describe('text animation boundaries', () => {
   });
 });
 
- it('offers 50 valid motion templates and 17 valid text styles', () => {
+ it('offers 50 valid motion templates and remaining valid text styles', () => {
    expect(motionTemplates).toHaveLength(50);
    expect(new Set(motionTemplates.map(template => template.name)).size).toBe(50);
    for (const template of motionTemplates) {
@@ -42,7 +42,7 @@ describe('text animation boundaries', () => {
        }
      }
    }
-   expect(Object.keys(textStyles)).toHaveLength(17);
+   expect(Object.keys(textStyles)).toEqual(['Soft script', 'Sports headline', 'Bold title', 'Outline']);
    for (const style of Object.values(textStyles)) {
      const clip = makeTextClip('text', 'track', 0); clip.style = { ...defaultTextStyle, ...style };
      expect(() => validateText(clip)).not.toThrow();

@@ -18,7 +18,7 @@ export class ProjectStore {
       try {
         const { project } = await this.read(folder.name);
         const file = await stat(join(this.folder(project.id), 'project.json')).catch(() => stat(join(this.folder(project.id), 'project.json.bak')));
-        return { id: project.id, name: project.name, updatedAt: file.mtime.toISOString(), mediaCount: Object.keys(project.media).length, settings: project.settings };
+        return { id: project.id, name: project.name, updatedAt: file.mtime.toISOString(), mediaCount: Object.keys(project.media).length, duration: project.tracks.reduce((end, track) => track.clips.reduce((end, clip) => Math.max(end, clip.start + clip.duration), end), 0), settings: project.settings };
       } catch { return null; }
     }));
     return entries.filter((entry): entry is ProjectSummary => entry !== null).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));

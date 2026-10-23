@@ -43,7 +43,7 @@ function layout(ctx: CanvasRenderingContext2D, clip: TextClip, scale: number): {
 const titleLayers = new WeakMap<TextClip, Map<string, HTMLCanvasElement>>();
 export function drawText(ctx: CanvasRenderingContext2D, clip: TextClip, time: number): void {
   const animations = [clip.animIn, clip.animOut, clip.animLoop];
-  if ((clip.caption?.words.length && ['karaoke', 'wordPop', 'box'].includes(clip.caption.preset ?? '')) || animations.some(animation => animation && (animation.granularity !== 'whole' || ['typewriter', 'wipe'].includes(animation.preset)))) {
+  if ((clip.caption?.words.length && ['karaoke', 'wordPop', 'box'].includes(clip.caption.preset ?? '')) || animations.some(animation => animation && (animation.granularity !== 'whole' || ['typewriter', 'wipe', 'maskRise', 'trackingIn', 'slideReveal'].includes(animation.preset)))) {
     drawTextBase(ctx, clip, time); return;
   }
   const key = `${ctx.canvas.width}:${ctx.canvas.height}`, cache = titleLayers.get(clip) ?? new Map<string, HTMLCanvasElement>(); titleLayers.set(clip, cache);
@@ -84,7 +84,9 @@ function drawTextBase(ctx: CanvasRenderingContext2D, clip: TextClip, time: numbe
   ctx.filter = baseBlur || baseHue ? `blur(${baseBlur * s}px) hue-rotate(${baseHue}deg)` : 'none';
   if (style.background) {
     const b = style.background, padX = b.paddingX * s, padY = b.paddingY * s;
-    ctx.save(); ctx.globalAlpha *= b.opacity; ctx.fillStyle = b.color; ctx.beginPath(); ctx.roundRect(-width / 2 - padX, -height / 2 - padY, width + padX * 2, height + padY * 2, b.radius * s); ctx.fill(); ctx.restore();
+    ctx.save();
+    if (clip.animIn?.preset === 'slideReveal') { const reveal = animationAt(clip.animIn, local, clip.duration, 0, 1, 'in').reveal; ctx.beginPath(); ctx.rect(-width / 2 - padX, -height / 2 - padY, (width + padX * 2) * reveal, height + padY * 2); ctx.clip(); }
+    ctx.globalAlpha *= b.opacity; ctx.fillStyle = b.color; ctx.beginPath(); ctx.roundRect(-width / 2 - padX, -height / 2 - padY, width + padX * 2, height + padY * 2, b.radius * s); ctx.fill(); ctx.restore();
   }
   let fill: string | CanvasGradient = style.color;
   if (style.gradient) {
@@ -130,6 +132,12 @@ function drawTextBase(ctx: CanvasRenderingContext2D, clip: TextClip, time: numbe
       const motion = animationAt(animation, local, clip.duration, group.index, all.count, phase);
       const { left, right, top, bottom } = group;
       const cx = (left + right) / 2, cy = (top + bottom) / 2;
+      if (animation.preset === 'maskRise') {
+        ctx.beginPath(); ctx.rect(left - style.fontSize * s * .15, top + style.fontSize * s * .35, right - left + style.fontSize * s * .3, bottom - top - style.fontSize * s * .8); ctx.clip();
+        ctx.translate(0, style.fontSize * s * 1.3 * (1 - motion.reveal));
+      }
+      if (animation.preset === 'trackingIn') ctx.translate(glyph.x * .28 * (1 - motion.reveal), 0);
+      if (animation.preset === 'slideReveal') { ctx.beginPath(); ctx.rect(left - 4 * s, top, (right - left + 8 * s) * motion.reveal, bottom - top); ctx.clip(); }
       if (animation.granularity !== 'whole') {
         ctx.translate(cx + motion.dx * s, cy + motion.dy * s); ctx.rotate(motion.rotation * Math.PI / 180); ctx.scale(motion.scale, motion.scale); ctx.translate(-cx, -cy);
         ctx.globalAlpha *= motion.opacity; blur += motion.blur; hue += motion.hue;
