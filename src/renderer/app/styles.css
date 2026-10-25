@@ -9,7 +9,7 @@ button:focus-visible { outline: 2px solid #befb77; outline-offset: 4px; }
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar { width: 230px; padding: 30px 18px 24px; border-right: 1px solid #27282c; background: #151618; display: flex; flex-direction: column; flex-shrink: 0; }
 .brand { display: flex; align-items: center; gap: 9px; font-size: 26px; font-weight: 700; letter-spacing: -1px; padding: 0 9px; }
-.brand-mark { color: #b6ee7e; transform: rotate(-12deg); }
+.brand-mark { display: block; width: 40px; height: 40px; object-fit: contain; flex-shrink: 0; }
 .alpha { font-size: 14px; letter-spacing: 1px; border: 1px solid #41443a; color: #a7ba92; border-radius: 4px; padding: 3px 5px; margin-left: auto; }
 .workspace-label { font-size: 14px; letter-spacing: 1.6px; color: #757780; margin: 58px 12px 18px; font-weight: 600; }
 .nav-item { display: flex; align-items: center; gap: 11px; border-radius: 7px; padding: 13px 12px; font-size: 15px; margin-bottom: 5px; }

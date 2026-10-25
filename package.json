@@ -1,6 +1,6 @@
 {
   "name": "opencut",
-  "version": "0.10.13",
+  "version": "0.10.14",
   "description": "OpenCut — a private, offline video editor for Windows",
   "author": "OpenCut",
   "private": true,
@@ -92,7 +92,8 @@
     ],
     "win": {
       "target": "portable",
-      "signAndEditExecutable": false
+      "icon": "resources/branding/opencut.ico",
+      "signExecutable": false
     },
     "artifactName": "OpenCut-${version}-${arch}.${ext}"
   }

@@ -1,6 +1,7 @@
 import { ProjectCollection } from './ProjectCollection';
 import { useEffect, useState } from 'react';
-import { Clapperboard, Folder, Plus, Scissors, Settings2, ArrowLeft, HardDrive } from 'lucide-react';
+import { Clapperboard, Folder, Plus, Settings2, ArrowLeft, HardDrive } from 'lucide-react';
+import { Brand } from './Brand';
 import { useProjects } from '../state/projects';
 import { ProjectDialog } from './ProjectDialog';
 import { MediaBrowser } from './MediaBrowser';
@@ -31,7 +32,7 @@ export function Projects({ onTools }: { onTools(): void }): JSX.Element {
   };
   return <div className={'project-shell' + (editing && store.project ? ' timeline-open' : '')}>
     <header className="editor-header">
-      <button className="brand" onClick={() => void leaveEditor(store.close)}><span className="brand-mark"><Scissors size={23}/></span>OpenCut</button>
+      <button className="brand" onClick={() => void leaveEditor(store.close)}><Brand/></button>
       <span className="header-divider"/>
       {store.project ? <><button className="breadcrumb" onClick={() => void leaveEditor(store.close)}><ArrowLeft size={14}/> Projects</button><span className="project-title">{store.project.name}</span><span className="autosave"><span className="local-dot"/> {editing ? 'Local timeline' : 'Saved locally'}</span></> : <span className="project-title">Your workspace</span>}
       <div className="header-actions">{store.project && <button className="secondary" disabled={store.busy} onClick={() => void leaveEditor(() => setDialog(true))}><Settings2 size={15}/> Project settings</button>}<button className="icon-button" title="Local tool settings" aria-label="Local tool settings" onClick={() => void leaveEditor(onTools)}><HardDrive size={18}/></button></div>

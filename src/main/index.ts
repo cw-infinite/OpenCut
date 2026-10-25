@@ -26,6 +26,7 @@ function trusted(event: Electron.IpcMainInvokeEvent): void {
 function createWindow(): void {
   window = new BrowserWindow({ width: 1400, height: 900, minWidth: 1000, minHeight: 720,
     title: 'OpenCut', backgroundColor: '#101113', autoHideMenuBar: true,
+    icon: join(__dirname, '../renderer/opencut.png'),
     webPreferences: { preload: join(__dirname, '../preload/index.js'), sandbox: true, contextIsolation: true, nodeIntegration: false }
   });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));

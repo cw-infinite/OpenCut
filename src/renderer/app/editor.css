@@ -69,10 +69,21 @@
 .timeline-clip.audio { background: #284e43; border-color: #50836d; }
 .timeline-clip.text { background: #6e5033; border-color: #bc9163; }
 .timeline-clip.selected-clip { outline: 2px solid #e6f1d4; outline-offset: 1px; }
-.timeline-clip strong { display: block; height: 19px; font-size: 14px; font-weight: 500; padding: 3px 7px; color: #d1dcea; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.timeline-clip strong { display: block; height: 19px; font-size: 14px; font-weight: 500; padding: 3px 18px; color: #d1dcea; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
 .clip-thumbnails { height: 35px; background-size: auto 35px; opacity: .75; }
 .timeline-clip .waveform { height: 35px; }
-.trim-handle { position: absolute; top: 0; bottom: 0; width: 7px; cursor: ew-resize; background: #ffffff12; z-index: 2; }
+.trim-handle { position: absolute; top: 0; bottom: 0; width: 16px; max-width: 30%; cursor: ew-resize; background: #101b2870; z-index: 3; touch-action: none; }
+.trim-handle::after { content: ''; position: absolute; top: 40%; bottom: 40%; left: 50%; width: 3px; border-radius: 2px; background: #e4eed5; transform: translateX(-50%); }
+.timeline-clip:hover .trim-handle, .selected-clip .trim-handle { background: #bddb9f55; }
+.trim-handle:hover { background: #bddb9fa0 !important; }
+.alignment-guides { position: absolute; inset: 0; pointer-events: none; z-index: 10; overflow: hidden; }
+.alignment-guide { position: absolute; border-color: #74e9ff; filter: drop-shadow(0 1px 1px #000); }
+.alignment-guide.x { top: 0; bottom: 0; border-left: 1px dashed #74e9ff; }
+.alignment-guide.y { left: 0; right: 0; border-top: 1px dashed #74e9ff; }
+.alignment-guide span, .alignment-guides small { position: absolute; white-space: nowrap; color: #defaff; background: #122b36e6; padding: 3px 6px; border-radius: 3px; font-size: 11px; }
+.alignment-guide.x span { top: 5px; left: 5px; }
+.alignment-guide.y span { top: 5px; left: 5px; }
+.alignment-guides small { bottom: 6px; right: 6px; }
 .trim-handle.left { left: 0; }.trim-handle.right { right: 0; }
 .playhead { position: absolute; top: 0; bottom: 0; width: 1px; background: #e9f9cf; z-index: 2; pointer-events: none; }
 .playhead span { display: block; width: 9px; height: 10px; margin-left: -4px; background: #c8efa0; clip-path: polygon(0 0,100% 0,100% 60%,50% 100%,0 60%); }

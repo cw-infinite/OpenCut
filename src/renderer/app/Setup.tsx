@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { ArrowDownToLine, Check, ChevronRight, Clapperboard, Cpu, Film, Folder, HardDrive, LockKeyhole, RefreshCw, Scissors, Sparkles, Waves } from 'lucide-react';
+import { ArrowDownToLine, Check, ChevronRight, Clapperboard, Cpu, Film, Folder, HardDrive, LockKeyhole, RefreshCw, Sparkles, Waves } from 'lucide-react';
+import { Brand } from '../ui/Brand';
 import { useSetup } from '../state/setup';
 
 export function Setup({ onContinue }: { onContinue?: () => void }): JSX.Element {
@@ -7,7 +8,7 @@ export function Setup({ onContinue }: { onContinue?: () => void }): JSX.Element 
   useEffect(() => { void check(); return window.opencut.onSetupProgress(setProgress); }, [check, setProgress]);
   return <div className="app-shell">
     <aside className="sidebar">
-      <div className="brand"><span className="brand-mark"><Scissors size={23}/></span>OpenCut<span className="alpha">DEV</span></div>
+      <div className="brand"><Brand/><span className="alpha">DEV</span></div>
       <div className="workspace-label">YOUR WORKSPACE</div>
       <div className="nav-item selected"><Clapperboard size={18}/> Getting started</div>
       <button className="nav-item" disabled={!report?.ready} onClick={onContinue}><Folder size={18}/> Projects</button>
