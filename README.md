@@ -1,74 +1,136 @@
 # OpenCut
 
-A free, local Windows video editor under development. Built with Electron, React 18, strict TypeScript, electron-vite, Tailwind, Zustand and Immer.
+OpenCut is a local Windows video editor for turning footage, audio, images, and text into finished videos. Organize projects, build multi-track edits, animate titles, generate English captions, and export video without an account or a cloud editing service. Media processing and creative tools run on your computer; internet access is needed for initial installation and optional tool downloads.
 
-**Current build: 0.10.7 — M0–M10 features implemented; stability validation underway.** Includes multi-track editing, keyframes, speed, transitions, reverse/freeze, animated titles/captions, offline English transcription, visual effects, advanced audio, MP4/audio exports, batch resolutions, platform presets, frame/cover images, silence removal, relink, and screen/webcam recording. See [milestone status](docs/STATUS.md).
+**Current version: 0.10.14 · Windows x64 · In development**
 
-## New in 0.10.7
+**Documentation updated: October 30, 2026**
 
-The video inspector now groups position/size, framing/mirror, color/effects, playback/tools, motion/transitions and audio into labeled cards, with shortcuts to each section. Crop edges have full names and fit options explain their effect. **Mirror left / right** swaps the picture horizontally; **Flip top / bottom** swaps it vertically. Both controls show their current state and support undo.
+The core M0–M10 feature set is implemented. Current work focuses on editing usability, project organization, and stability. This README describes the current source checkout, including the recent improvements below; broader real-footage and hardware validation is still underway.
 
-## New in 0.10.6
+## Recent improvements in the current build
 
-- Stable preview sizing, source playback on media clicks, and live clip trimming.
-- Close gaps across all tracks or on a selected track, preserving linked clips.
-- Fifty motion-text templates and ten additional text styles.
-- Wider, resizable media and inspector panels, with organized text controls.
-- Move selected captions/texts together in the preview or through shared X/Y controls, with undo and drag cancellation.
+- **Project tags and groups:** assign multiple tags, reuse existing tags, and filter the Projects page by a tag, Untagged, or All projects. Combine grouping with name search in card, simple-list, and detailed-list views. Tags persist with projects and are retained when duplicating them.
+- **Bulk media management:** drag from empty space in the Media library to select items, Ctrl-click to toggle, or Shift-click to select a range. Select visible items, clear selection, delete selected items, or delete the entire library. Delete all includes items hidden by search. Original files are kept; a batch containing media used on the timeline is rejected without deleting any items.
+- **Resizable timeline:** drag the divider above the timeline up to increase its height or down to restore preview space. Double-click to reset. A focused divider also supports the Up/Down arrows and Home/End, with size limits to keep both panels usable.
+- **Updated branding:** the blue-and-white OpenCut emblem is used in setup, the workspace/editor header, favicon, and Windows application icon.
 
-## New in 0.10.5
+These updates are part of the current 0.10.14 checkout; they have not been assigned separate version numbers.
 
-Media loading and seeking now cancel cleanly when their source is released, with bounded waits for damaged or unavailable media. Retired audio graph nodes are disconnected, silent videos avoid unnecessary audio graphs, and font-readiness caching follows active text. Playback timecodes use fixed-width digits to keep controls steady.
+## Available features
 
-A generated one-hour, 900-clip timeline sustained approximately 49 fps during a ten-second five-track 1080p half-quality playback sample on the test desktop. Renderer selection response stayed below 38 ms. See [stability measurements and reproducible checks](docs/STABILITY.md) for the exact fixture, hardware and remaining acceptance coverage.
+### Projects and media
 
-## New in 0.10.4
+- Create, rename, duplicate, delete, and reopen local projects, with autosaving and recovery from valid backup data.
+- Browse projects as cards, a simple list, or a detailed table with duration, resolution, aspect ratio, frame rate, media count, and update date.
+- Organize projects with up to 20 tags per project, each up to 40 characters. Groups are tag-based rather than filesystem folders; a project can belong to several groups.
+- Import local video, audio, and images using a file picker or drag and drop, with prepared proxies, thumbnails, and waveforms.
+- Preview source media, identify missing originals, and relink files.
+- Save a preview frame as a project cover.
 
-- **Smart reframe:** choose the desired project canvas preset, select a video, then open **Motion tracking → Tracking purpose → Smart reframe to canvas**. Load the source frame, click a detailed subject feature, track, and apply. The clip fills the canvas and follows the subject using editable position keyframes, clamped to avoid exposed edges. This replaces the clip's crop/transform and is undoable. Tracking retains the existing 60-second and subject-visibility limits.
-- **Text to speech:** use **Text to speech** in the media panel. Enter up to 5,000 characters, choose 0.5–2× speed, and generate a local Piper US English voiceover at the playhead. Cancel processing or undo timeline insertion.
-- **Portrait background removal:** select a photo/video and use **Remove background** in the inspector. Local MODNet inference creates a transparent PNG/WebM copy; it composites over lower tracks in preview and MP4 export. Video source ranges are limited to 30 seconds. Review difficult hair, hands, occlusion and motion. Apply reverse/stabilization before removal; those preparation actions are unavailable on cutouts.
+### Timeline and preview
 
-The portable build includes these local tools. Source checkouts can run `npm run setup:creative`, or download missing tools explicitly from the feature dialog. Generation never contacts a service. Versions, hashes, licenses and sources are recorded in [local tool notices](docs/licenses/README.md).
+- Multi-track video, audio, and text editing with drag-and-drop insertion, live trimming, splitting, deletion, ripple deletion, copying, duplication, and undo/redo.
+- Create tracks by dropping media or text between tracks or into the bottom drop area; double-click insertion is also available.
+- Marquee and multi-clip selection, moving selections together, grouping, markers, snapping, and gap closing across all tracks or a chosen track.
+- Track locking, hiding, muting, and reordering, plus protection against invalid overlaps and incompatible edits.
+- Live preview move, resize, and rotation gestures, with one undo step per gesture and Escape to cancel.
+- Preview zoom, fit, fullscreen, quality controls, horizontally resizable media/inspector panels, and a draggable timeline-height divider.
 
-## New in 0.10.3
+### Video, animation, and effects
 
-Select multiple text or caption clips to open the bulk style inspector. Change font family, size, weight, italic, alignment, spacing, color, border/outline, shadow, glow, background and gradient together. Built-in and saved style presets can be applied to the whole selection. Mixed values are labeled; editing one property preserves the others. Each action is undoable, and caption wording/timing and unselected clips stay intact. Media selections retain their volume and mute controls.
+- Position, scale, rotation, opacity, crop, fit/fill, horizontal mirror, and vertical flip controls.
+- Property keyframes, easing, custom Bézier curves, speed changes, transitions, reverse, and freeze frames.
+- Color adjustments, filters, blur, RGB split, shake, zoom pulse, VHS, pixelation, grain, blend modes, masks, chroma key, and picture-in-picture frames.
+- Local video stabilization that creates a derived copy and preserves the original.
+- Motion tracking for text/image overlays and subject-following smart reframe, producing editable position keyframes.
+- Local portrait background removal for photos and short video ranges, creating transparent PNG/WebM derivatives.
 
-## New in 0.10.2
+### Text and captions
 
-Preview move, resize and rotation now update live while dragging. Each gesture creates one undo entry; Escape cancels. Timeline marquee selection highlights every touched clip while pressed, across tracks in every direction, and shows a live selection count.
+- Editable titles with bundled fonts, built-in styles, saved style presets, and motion-text templates.
+- Text alignment, spacing, wrapping, gradients, outlines, shadows, glow, and backgrounds; entrance, exit, loop, and staggered/typewriter animations.
+- Bulk styling and positioning for selected text/caption clips.
+- Offline English transcription using Whisper.cpp, with base.en and optional small.en model controls.
+- Caption text/timing editing, merge/split, deletion, find/replace, restyling, and SRT import/export.
+- Animated karaoke, word-pop, and box-highlight styles. Captions are editable text clips and can be burned into MP4 output.
+- Transcript-based cuts and filler-word review using generated word timings. Imported SRT or manually edited captions without word timing cannot drive transcript cuts.
 
-Drag library media or the new **Text** tile directly onto a compatible track. Drop between tracks or in the bottom drop area to create a track at that position. Dropping onto a different track type creates a compatible track above it. A placement preview shows the intended start time. The Add track dropdown has been removed; double-click insertion and the Add text button remain available. Locked tracks and overlaps are protected.
+### Audio and recording
 
-The timeline stays inside the editor window and scrolls independently. The preview area remains vertically resizable, with zoom and fullscreen controls.
+- Clip and master volume, solo/mute, fades, ducking, and beat-marker detection.
+- Export-time noise reduction and loudness normalization.
+- Silence detection with review and undoable removal across tracks.
+- Microphone voiceover recording and local text-to-speech using Piper.
+- Webcam and screen/window recording, with microphone and system-audio options.
 
-## New in 0.10.1
+### Export
 
-Select a video clip and open **Motion tracking** in its inspector. Load the first frame, click a detailed feature or edge, then choose **Track movement**. Choose an unlocked text or image overlay that spans the source clip and apply the result. Tracking preserves the overlay’s initial offset and writes editable X/Y keyframes as one undoable edit. Review by scrubbing before exporting.
+- MP4 video with H.264/AAC, automatic hardware-encoder selection where available, and software encoding.
+- 480p, 720p, and 1080p options; frame rate, quality, audio bitrate, output-shape, and platform presets.
+- Full-timeline or marked-range exports, plus sequential batch exports at multiple resolutions.
+- WAV, MP3, and AAC audio export, and full-resolution PNG/JPEG frame export.
+- Background export while editing, progress reporting, and cancellation with incomplete-output cleanup. Completed batch files remain available after cancellation.
 
-Tracking is local and supports source transforms, crop, speed and reverse through the shared compositor. It samples at 10 Hz with a 320-pixel analysis edge and handles clips up to 60 seconds. It stops when the subject no longer matches; occlusion, similar-looking subjects, zoom and fast motion can require a shorter clip or manual keyframe correction.
+## Quick start
 
-## New in 0.10.0
+1. Open OpenCut and complete local tool setup if prompted. Use **Check again** to verify tool readiness.
+2. Choose **Open projects → New project**, enter a name, and choose the canvas and frame rate.
+3. Import or drop video, audio, and images into the **Media library**.
+4. Choose **Open timeline**. Drag media or the Text tile onto a track or a track-insertion area, or double-click a media item to insert it.
+5. Trim and arrange clips, adjust properties in the inspector, and add text, captions, audio, or effects. Drag the divider above the timeline when you need more room for tracks.
+6. Choose **Export**, configure the output, and select a destination.
+7. Return to **Projects** to organize the project: click its tag icon, enter comma-separated tags, and choose **Save tags**. Use **Project group** to view a group separately.
 
-Open **Captions → Edit video by transcript** after generating timed captions. Click words to toggle selection; Shift-click selects a range. Deleting selected words removes their intervals across every track in one undoable edit. Gaps remain; review speech recognition and word timing before cutting. Imported SRT and manually edited captions without word timing cannot drive these cuts.
+### Common shortcuts
 
-Select a video clip and choose **Stabilize video** in the inspector. Processing creates a local copy and preserves the clip timing, speed, direction and visual settings. Undo restores the original clip. Exposed edges are mirrored; review results for moving subjects. Originals remain intact.
+| Action | Shortcut |
+|---|---|
+| Play / pause | Space |
+| Split selected clip | S |
+| Delete selected clips | Delete |
+| Ripple delete | Shift+Delete |
+| Undo / redo | Ctrl+Z / Ctrl+Y |
+| Copy / paste / duplicate | Ctrl+C / Ctrl+V / Ctrl+D |
+| Seek one frame | Left / Right arrow |
+| Seek one second | Shift+Left / Shift+Right |
+| Set export-range start / end | I / O |
+| Cancel an active preview/edit gesture | Escape |
 
-The remaining M10 features were added in 0.10.4.
+Library selection uses Ctrl-click to toggle and Shift-click for a range. Timeline selection uses Shift-click to toggle clips.
 
-## Easier editing in 0.9.1
+## Current status and validation
 
-Interface labels now use at least 14 px text. Drag from empty timeline space in any direction to select every clip touched by the rectangle, including clips on other tracks. Shift-click toggles individual clips. Drag any selected clip to move the selection with live preview and edge scrolling; release to commit one undoable edit, or press Escape to cancel. Invalid overlaps and locked/incompatible tracks are rejected.
+The current version is **0.10.14**, as declared in `package.json`. It is a development build, not a claim of complete production or hardware certification.
 
-The bulk inspector offers delete/deselect, volume and mute for media selections, and font size for text selections. Delete affects the selected clips; Ctrl+D duplicates the whole selection after its original span, preserving offsets and moving later clips on affected tracks to make room.
+Recent completed checks include:
 
-The preview visibly follows the project's canvas shape. Use **Preview zoom** (25–300%) and **Fit preview**; scroll to inspect a zoomed canvas, or resize the upper workspace vertically. Fullscreen now works and includes playback controls, with a button or Escape to exit. Preview zoom does not alter exported framing.
+- TypeScript type checking and production builds.
+- Project-tag normalization, persistence, older untagged projects, duplication, and independent tag edits: six targeted unit/integration tests passed across the project and tag suites.
+- Desktop checks for tag editing/reuse/removal, combined search and group filters, and existing project views, rename, duplicate, and open behavior.
+- Desktop checks for media selection, canceled and confirmed bulk deletion, filtered delete-all, original-file preservation, and atomic rejection when media is used on the timeline.
+- Desktop checks for timeline-divider dragging, keyboard resizing, bounds, release behavior, and reset.
+- Visual review of the updated project and editor interfaces, and Windows unpacked builds with the current branding.
 
-0.5.1 fixes a black screen when Projects restores media with an older waveform cache. Both array and `{ buckets, peaks }` caches are supported; missing or damaged waveform caches no longer prevent opening a project.
+These are targeted checks completed during the recent changes, not a fresh full-suite run for every feature. Historical milestone acceptance and export checks are recorded in [Milestone status](docs/STATUS.md); its numbered release entries currently run through 0.10.7. See [Stability acceptance](docs/STABILITY.md) for the synthetic long-project measurements and their limits.
 
-## Run on Windows x64
+### Known limits and remaining validation
 
-Requires Node.js 22.12+ and npm. From this directory:
+- Windows x64 is the current packaging target. Canvas dimensions are even numbers from 64 to 1920 pixels, with the shorter edge at most 1080; supported frame rates are 24, 25, 30, 50, and 60 fps. 4K is not supported.
+- Captions currently target English. Actual optional small.en inference and timing quality on arbitrary human speech still need broader validation.
+- Motion tracking and smart reframe require a user-selected feature and support clips up to 60 seconds. Occlusion, fast motion, and similar-looking subjects can require manual correction.
+- Portrait removal targets people, uses a 512-pixel analysis edge, and limits video source ranges to 30 seconds. Apply reverse/stabilization before generating cutouts.
+- Text-to-speech currently provides one US English voice, up to 5,000 characters per request, at 0.5–2× speed.
+- Video capture is limited to five minutes/120 MB; microphone voiceover to 30 minutes/60 MB. Physical device and system-audio capture still need manual acceptance.
+- Broader phone/VFR/rotated-media testing, manual listening and external-player checks, continuous long-session playback, effect-heavy performance, and real-source long 1080p CPU exports remain outstanding.
+- No account, telemetry, automatic updater, or code signing is configured. Cloud services, stock marketplaces, translation, and non-English captions are outside the current scope.
+- Some in-app version labels still display 0.10.7; use `package.json` for the current application version.
+
+See [Scope and remaining work](docs/SKIPPED.md) for detailed constraints and acceptance gaps.
+
+## Run from source on Windows x64
+
+Requires Node.js 22.12+ and npm. From the repository directory:
 
 ```powershell
 npm install
@@ -77,65 +139,44 @@ npm run setup:creative
 npm run dev
 ```
 
-The first install downloads Electron, FFmpeg and FFprobe. Tool setup downloads the CPU Whisper CLI and English base model (approximately 160 MB), verifies checksums, and stores them in `resources/tools/`. Later use requires no network. `npm run setup:tools -- --small` also installs the optional small English model.
+Installation downloads Electron, FFmpeg, and FFprobe. Core setup downloads the CPU Whisper CLI and English base model (approximately 160 MB), verifies checksums, and stores tools under `resources/tools/`. Creative setup installs the local speech and portrait-removal tools. Once installed, processing runs locally without a network connection.
 
-You can also run setup using **Set up local tools** in the app. Failed downloads can be retried. The tool status reports actual executable checks, not just file presence (models are checksum-verified at download).
+For the optional small English transcription model:
+
+```powershell
+npm run setup:tools -- --small
+```
+
+The app also exposes explicit setup/download actions for missing tools. Failed downloads can be retried. Tool status checks execute the tools rather than checking file presence alone; downloaded models are checksum-verified. See [Tool licenses and sources](docs/licenses/README.md).
+
+## Build, test, and package
 
 ```powershell
 npm run typecheck
 npm test
+npm run build
 npm run test:smoke
+npm run test:stability
 npm run package
 ```
 
-Portable Windows output goes to `dist/`. No signing, updater, account or telemetry is configured. The bundled tools must be installed before packaging an offline-ready build.
+`test:smoke` builds first and launches Electron desktop tests. Stability checks include generated fixtures; the full one-hour export is opt-in as documented in [Stability acceptance](docs/STABILITY.md).
 
-## Verify M0
+`npm run package` produces an unsigned Windows x64 portable executable in `dist/`. Install the bundled tools before packaging an offline-ready build. An unpacked build can also be produced with:
 
-1. Run `npm run dev`; an **OpenCut** desktop window should open.
-2. Click **Set up local tools** if needed. After completion, the header should say **Tools OK**.
-3. Confirm FFmpeg, FFprobe, Whisper.cpp and the English speech model all show **Ready**.
-4. Click **Check again**. This runs the real `ffmpeg -version` and `ffprobe -version` commands through the typed IPC bridge, plus Whisper `--help`.
+```powershell
+npm run build
+npx electron-builder --win --dir --x64
+```
 
-## Edit and export
+Run `OpenCut.exe` inside the resulting `win-unpacked` folder and keep its supporting files together. Build outputs are local artifacts, not files included with a source checkout. The latest local build produced during the project-tag update is `dist/project-tags/win-unpacked/OpenCut.exe`; older output folders may contain earlier features.
 
-1. Click **Open projects → New project**. Choose the canvas and frame rate, then create it.
-2. Click **Import media** or drop local video/audio/images into the source browser. Wait for proxy/thumbnails/waveform preparation.
-3. Click **Open timeline**. Add a video/audio track and drag media onto it, or double-click a media item to create a clip on a new track.
-4. Move clips by dragging. Drag clip edges to trim. Click the ruler to seek; select a clip and press **S** to split, **Delete** to remove, or **Shift+Delete** to ripple delete. **Ctrl+Z/Y** undo/redo. **Space** plays/pauses.
-5. Adjust position, scale, rotation, opacity, crop, fit, flip and audio volume in the inspector. Drag the preview to position; use its handles to scale/rotate. Track controls lock/hide/mute and reorder tracks. Edits autosave.
-6. In **Animation**, select a property and add keyframes at different playhead positions. Edit values/easing in the inspector; drag timeline diamonds to retime. Double-click a timeline clip to add keys; right-click a diamond to delete. Undo/redo and trim/split preserve animation. The inspector also offers speed, transitions, reverse and freeze.
-7. Click **Export**. Choose 480p/720p/1080p, FPS, quality, AAC bitrate, and automatic or software encoding. **I/O** set optional export-range endpoints on the timeline.
-8. Click **Export MP4** and choose a path. **Keep editing** closes the dialog while export continues; a task indicator remains visible. Cancel removes incomplete output.
+## Technology and project notes
 
-## Verify M5: animated titles
+OpenCut uses Electron, React 18, TypeScript, electron-vite, Tailwind, Zustand, and Immer. Local media and creative processing uses FFmpeg/FFprobe, Whisper.cpp, Piper, and MODNet. Preview and video export share rendering logic.
 
-Run `npm run dev`, then **Open projects → New project → Create project → Open timeline → Add text**.
-
-1. Edit **Text content**, or double-click the preview and choose **Apply text**. Choose a font and style preset in the inspector.
-2. Enable **stroke**, **shadow**, and **background** under Appearance; adjust their colors and dimensions.
-3. Under **Text animations**, choose **pop** for In, **slideDown** for Out, and **pulse** for Loop. Seek and play to inspect the entrance and exit.
-4. Try **typewriter** with **char** granularity and adjust Stagger. The shared **Animation** section adds transform and opacity keyframes.
-5. Name your style and click **Save style** to reuse it. Click **Export → Export MP4** for a local video.
-
-Checks include generated VFR import, frame seeking, restart restore, timeline operations, 200-step history capacity, and real MP4 exports. Animated title frames at 0.2, 0.8, and 1.8 seconds match preview within lossy-encoding tolerance with automatic GPU selection and software encoding. Real-camera footage, long edits, manual player compatibility and performance targets still need broader validation.
-
-The full product roadmap remains the supplied build spec, implemented in milestone order. Decisions and deviations are recorded in `docs/DECISIONS.md` and `docs/SKIPPED.md`.
-
-## Audio and captions
-
-Select an audio/video clip to adjust master gain, solo, fades and ducking in the inspector. Noise reduction and loudness normalization apply during export. **Detect beat markers** adds onset candidates. **Record voiceover** captures your microphone at the playhead; stop recording to add it as an audio clip. Export supports WAV, MP3 and AAC in addition to MP4.
-
-Click **Captions** to generate offline English captions from the audible timeline, an I/O range, or the selected clip. Adjust character/word/line limits and choose a style and position, including karaoke, word-pop and box-highlight presets. The list supports text edits, timing changes, merge/split, delete, find/replace, and restyle all. SRT import/export is available in the same dialog. Captions are ordinary text clips and burn into MP4 output. Generate adds a new track; existing captions stay available for comparison or undo.
-
-Model controls offer base.en and the optional checksum-verified small.en download. Filler-word candidates use generated word timings and can be reviewed and cut with undo. Imported and manually edited caption text has no word timings. Actual small.en inference and arbitrary human-speech timing remain unverified.
-
-## Effects and export polish
-
-Select a media clip for filters, color adjustments, blur, RGB split, shake, zoom pulse, VHS, mirror, pixelation, grain, blend modes, masks, chroma key, and picture-in-picture frames. Preview and export share the same renderer.
-
-In **Export**, choose a platform preset or output shape. Enable **Batch export resolutions** to produce 1080p, 720p and 480p sequentially in one folder. A batch uses one project snapshot; cancel retains completed files. Estimated sizes are approximate. **Save frame** above the preview exports a full-resolution PNG/JPEG or sets the project cover.
-
-The source browser flags missing originals and offers **Relink selected media**. The inspector's **Remove silence** analyzes an audio/video clip, shows candidate intervals, and removes them across all tracks with one undo. **Markers**, **Group**, and **Ungroup** are in the timeline toolbar.
-
-**Record video** offers webcam or a selected screen/window with optional microphone/system audio. Stop to add the recording at the playhead. Video recordings are limited to five minutes/120 MB; physical devices and system-audio capture still need manual testing.
+- [Milestone history and acceptance evidence](docs/STATUS.md)
+- [Stability measurements and repeatable checks](docs/STABILITY.md)
+- [Remaining work and feature limits](docs/SKIPPED.md)
+- [Implementation decisions](docs/DECISIONS.md)
+- [Bundled tool licenses and sources](docs/licenses/README.md)
