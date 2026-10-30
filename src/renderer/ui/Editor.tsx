@@ -2,7 +2,7 @@ import { CreativeDialog } from './CreativeDialog';
 import { Voiceover } from './Voiceover';
 import { VideoCapture } from './VideoCapture';
 import { CaptionsDialog } from './CaptionsDialog';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Film, Plus, Sun, Moon, Search, ArrowLeft } from 'lucide-react';
 import { useEditor } from '../state/editor';
 import { useProjects } from '../state/projects';
@@ -19,6 +19,14 @@ export function Editor({ onBack }: { onBack(): void }): JSX.Element {
   const source = useProjects(), state = useEditor();
   const [largePreview, setLargePreview] = useState(() => source.project!.settings.height > source.project!.settings.width);
   const [libraryWidth, setLibraryWidth] = useState(310), [inspectorWidth, setInspectorWidth] = useState(350);
+  const [previewHeight, setPreviewHeight] = useState<number | null>(null);
+  const timelineResize = useRef<{ pointer: number; y: number; height: number } | null>(null);
+  const resizeTimeline = (divider: HTMLElement, height: number) => {
+    const top = divider.previousElementSibling as HTMLElement;
+    const workspace = divider.parentElement!;
+    const available = workspace.getBoundingClientRect().bottom - top.getBoundingClientRect().top;
+    setPreviewHeight(Math.max(240, Math.min(height, available - divider.offsetHeight - 180)));
+  };
   const resizePanel = (event: React.PointerEvent, side: 'library' | 'inspector') => {
     event.preventDefault();
     const node = event.currentTarget as HTMLElement; node.setPointerCapture(event.pointerId);
@@ -60,7 +68,7 @@ export function Editor({ onBack }: { onBack(): void }): JSX.Element {
   }, []);
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
-      if (document.querySelector('[role="dialog"]') || (event.target as HTMLElement).closest('input,textarea,select,[contenteditable=true]')) return;
+      if (document.querySelector('[role="dialog"]') || (event.target as HTMLElement).closest('input,textarea,select,[contenteditable=true],[role="separator"]')) return;
       const state = useEditor.getState(), project = state.project; if (!project) return;
       const key = event.key.toLowerCase(), mod = event.ctrlKey || event.metaKey;
       const actions: Record<string, () => void> = mod ? {
@@ -84,7 +92,32 @@ export function Editor({ onBack }: { onBack(): void }): JSX.Element {
     try { await source.setProject(await window.opencut.projects.saveEdit(useEditor.getState().project!)); useEditor.setState({ dirty: false }); onBack(); } catch (error) { useEditor.setState({ error: String(error) }); }
   }}><ArrowLeft size={14}/> Source browser</button><span>{state.dirty ? 'Saving…' : 'All edits saved'}{range.end > range.start ? ` · Range ${timecode(range.start)} – ${timecode(range.end)}` : ''}</span><div className="editor-export-actions"><Voiceover/><VideoCapture/><button className="secondary" onClick={() => setCaptionsOpen(true)}>Captions</button><button className="secondary" onClick={() => state.addText()} draggable onDragStart={event => { event.dataTransfer.setData('application/opencut-text', 'text'); useEditor.setState({ dragItem: { kind: 'text' } }); }} onDragEnd={() => useEditor.setState({ dragItem: null })}>Add text</button><button title="Change theme" aria-label="Change theme" onClick={() => setLight(!light)}>{light ? <Moon size={16}/> : <Sun size={16}/>}</button><button className="primary" onClick={() => setExportOpen(true)}>Export</button></div></div>
     {state.error && <div className="error" role="alert">{state.error}<button onClick={() => useEditor.setState({ error: null })}>Dismiss</button></div>}
-    <div className={'editor-top' + (largePreview ? ' large-preview-layout' : '')} style={{ '--library-width': `${libraryWidth}px`, '--inspector-width': `${inspectorWidth}px` } as React.CSSProperties}><section className="editor-library"><div className="panel-heading"><h2>Media</h2><Film size={15}/></div><button className="speech-library-button" onClick={() => setSpeechOpen(true)}>Text to speech</button><div className="search"><Search size={13}/><input placeholder="Search media" aria-label="Search timeline media" value={search} onChange={event => setSearch(event.target.value)}/></div><p className="subtle">Drag media or text into a track, or between tracks to create one.</p><button className="library-text-tile" draggable onDragStart={event => { event.dataTransfer.setData('application/opencut-text', 'text'); useEditor.setState({ dragItem: { kind: 'text' } }); }} onDragEnd={() => useEditor.setState({ dragItem: null })} onDoubleClick={() => state.addText()}><span>T</span><strong>Text</strong><small>Drag to timeline</small></button><div className="media-grid">{source.views.filter(view => fileName(view.asset.path).toLowerCase().includes(search.toLowerCase())).map(view => <button className="editor-asset media-card" key={view.asset.id} disabled={view.asset.status !== 'ready'} draggable={view.asset.status === 'ready'} onDragStart={event => { event.dataTransfer.setData('application/opencut-media', view.asset.id); useEditor.setState({ dragItem: { kind: 'media', id: view.asset.id } }); }} onDragEnd={() => useEditor.setState({ dragItem: null })} onClick={() => useEditor.setState({ sourcePreview: view.asset.id, playing: false })} onDoubleClick={() => state.addMedia(view.asset.id)}><div className="media-thumb">{view.thumbnail ? <img src={view.thumbnail} alt=""/> : <Waveform peaks={view.peaks}/>}</div><strong>{fileName(view.asset.path)}</strong><small>{view.asset.kind} <Plus size={10}/></small></button>)}</div></section><div className="panel-resizer" role="separator" aria-label="Resize media panel" aria-orientation="vertical" onPointerDown={event => resizePanel(event, 'library')}/><Preview large={largePreview} onToggleLarge={() => setLargePreview(value => !value)}/><div className="panel-resizer" role="separator" aria-label="Resize inspector panel" aria-orientation="vertical" onPointerDown={event => resizePanel(event, 'inspector')}/><Inspector/></div><Timeline/>
+    <div className={'editor-top' + (largePreview ? ' large-preview-layout' : '')} style={{ height: previewHeight ?? undefined, '--library-width': `${libraryWidth}px`, '--inspector-width': `${inspectorWidth}px` } as React.CSSProperties}><section className="editor-library"><div className="panel-heading"><h2>Media</h2><Film size={15}/></div><button className="speech-library-button" onClick={() => setSpeechOpen(true)}>Text to speech</button><div className="search"><Search size={13}/><input placeholder="Search media" aria-label="Search timeline media" value={search} onChange={event => setSearch(event.target.value)}/></div><p className="subtle">Drag media or text into a track, or between tracks to create one.</p><button className="library-text-tile" draggable onDragStart={event => { event.dataTransfer.setData('application/opencut-text', 'text'); useEditor.setState({ dragItem: { kind: 'text' } }); }} onDragEnd={() => useEditor.setState({ dragItem: null })} onDoubleClick={() => state.addText()}><span>T</span><strong>Text</strong><small>Drag to timeline</small></button><div className="media-grid">{source.views.filter(view => fileName(view.asset.path).toLowerCase().includes(search.toLowerCase())).map(view => <button className="editor-asset media-card" key={view.asset.id} disabled={view.asset.status !== 'ready'} draggable={view.asset.status === 'ready'} onDragStart={event => { event.dataTransfer.setData('application/opencut-media', view.asset.id); useEditor.setState({ dragItem: { kind: 'media', id: view.asset.id } }); }} onDragEnd={() => useEditor.setState({ dragItem: null })} onClick={() => useEditor.setState({ sourcePreview: view.asset.id, playing: false })} onDoubleClick={() => state.addMedia(view.asset.id)}><div className="media-thumb">{view.thumbnail ? <img src={view.thumbnail} alt=""/> : <Waveform peaks={view.peaks}/>}</div><strong>{fileName(view.asset.path)}</strong><small>{view.asset.kind} <Plus size={10}/></small></button>)}</div></section><div className="panel-resizer" role="separator" aria-label="Resize media panel" aria-orientation="vertical" onPointerDown={event => resizePanel(event, 'library')}/><Preview large={largePreview} onToggleLarge={() => setLargePreview(value => !value)}/><div className="panel-resizer" role="separator" aria-label="Resize inspector panel" aria-orientation="vertical" onPointerDown={event => resizePanel(event, 'inspector')}/><Inspector/></div>
+    <div className="timeline-resizer" role="separator" aria-label="Resize timeline panel" aria-orientation="horizontal" tabIndex={0} title="Drag up to expand timeline. Double-click to reset."
+      onPointerDown={event => {
+        if (event.button !== 0) return;
+        event.preventDefault(); event.currentTarget.focus();
+        timelineResize.current = { pointer: event.pointerId, y: event.clientY, height: event.currentTarget.previousElementSibling!.getBoundingClientRect().height };
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }}
+      onPointerMove={event => {
+        const drag = timelineResize.current;
+        if (drag && drag.pointer === event.pointerId) resizeTimeline(event.currentTarget, drag.height + event.clientY - drag.y);
+      }}
+      onPointerUp={event => {
+        timelineResize.current = null;
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+      }}
+      onPointerCancel={() => { timelineResize.current = null; }}
+      onLostPointerCapture={() => { timelineResize.current = null; }}
+      onDoubleClick={() => setPreviewHeight(null)}
+      onKeyDown={event => {
+        if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault(); event.stopPropagation();
+        const height = event.currentTarget.previousElementSibling!.getBoundingClientRect().height;
+        resizeTimeline(event.currentTarget, event.key === 'Home' ? 240 : event.key === 'End' ? Infinity : height + (event.key === 'ArrowUp' ? -20 : 20));
+      }}><span/></div>
+    <Timeline/>
     {speechOpen && <CreativeDialog onClose={() => setSpeechOpen(false)}/>}
     {exportOpen && <ExportDialog range={range} onClose={() => setExportOpen(false)}/>}
     {captionsOpen && <CaptionsDialog range={range} onClose={() => setCaptionsOpen(false)}/>}

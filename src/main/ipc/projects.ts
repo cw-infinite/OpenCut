@@ -70,9 +70,12 @@ export function projectHandlers(store: ProjectStore, library: MediaLibrary, trus
   handle('media:derive', (event, id, clipId, operation, time) => library.derive(id, clipId, operation, time, progress => { if (!event.sender.isDestroyed()) event.sender.send('media:progress', progress); }));
   handle('media:remove', (_event, id, assetId) => {
     library.assertIdle(id);
+    const ids = typeof assetId === 'string' ? [assetId] : assetId;
+    if (!Array.isArray(ids) || !ids.length || ids.some(value => typeof value !== 'string' || !value)) throw new Error('Select media to remove.');
+    const removing = new Set(ids);
     return store.update(id, project => {
-      if (project.tracks.some(track => track.clips.some(clip => clip.type === 'media' && clip.mediaId === assetId))) throw new Error('This media is used on the timeline. Remove its clips first.');
-      delete project.media[assetId];
+      if (project.tracks.some(track => track.clips.some(clip => clip.type === 'media' && removing.has(clip.mediaId)))) throw new Error('Some selected media is used on the timeline. Remove its clips first. No media was deleted.');
+      for (const asset of removing) delete project.media[asset];
     });
   });
 }

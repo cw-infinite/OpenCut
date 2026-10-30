@@ -52,6 +52,12 @@ input:focus, select:focus { border-color: #a8d880; }
 .media-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
 .media-card { position: relative; border: 1px solid #333842; border-radius: 5px; overflow: hidden; }
 .media-card.active { border-color: #abd880; box-shadow: 0 0 0 1px #abd88033; }
+.library-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.library-actions .secondary { padding: 7px 9px; font-size: 12px; }
+.library-selection-help { color: #939ba8; font-size: 12px; line-height: 1.5; }
+.library-selection-area { padding: 10px 6px 40px; min-height: 180px; user-select: none; touch-action: none; }
+.library-selection-area .media-thumb img { pointer-events: none; }
+.library-selection-box { position: fixed; pointer-events: none; z-index: 100; border: 1px solid #abd880; background: #abd88026; }
 .media-select { width: 100%; text-align: left; }
 .media-thumb { position: relative; height: 80px; background: #22282a; display: flex; justify-content: center; align-items: center; color: #869d8c; }
 .media-thumb img { width: 100%; height: 100%; object-fit: cover; }

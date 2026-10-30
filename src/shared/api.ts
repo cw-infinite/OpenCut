@@ -66,7 +66,7 @@ export interface OpenCutApi {
     pick(projectId: string): Promise<Project>;
     drop(projectId: string, files: File[]): Promise<Project>;
     views(projectId: string): Promise<MediaView[]>;
-    remove(projectId: string, assetId: string): Promise<Project>;
+    remove(projectId: string, assetId: string | string[]): Promise<Project>;
     onProgress(callback: (progress: ImportProgress) => void): () => void;
   };
   checkTools(): Promise<ToolReport>;

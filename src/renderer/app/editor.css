@@ -125,7 +125,7 @@
 .preview-panel .panel-heading select { width: auto; max-width: 170px; padding: 5px; font-size: 14px; } .editor-export-actions { gap: 12px; flex-wrap: wrap; } .timeline-toolbar > div { gap: 12px; } .timeline-toolbar .modal { text-align: left; } .batch-outputs { font-size: 14px; max-height: 120px; overflow: auto; }
 
 /* Readable controls, responsive canvas, and pointer-based timeline editing. */
-.editor-top { height: clamp(480px, 64vh, 850px); min-height: 430px; resize: vertical; overflow: hidden; }
+.editor-top { height: clamp(480px, 64vh, 850px); min-height: 430px; overflow: hidden; }
 .inspector { width: 280px; }
 .editor-library { width: 220px; }
 .editor-subbar, .timeline-toolbar { flex-wrap: wrap; gap: 10px; }
@@ -188,6 +188,10 @@
 .timeline-open .timeline { flex: 1; min-height: 180px; display: flex; flex-direction: column; }
 .timeline-open .timeline-toolbar { flex-shrink: 0; }
 .timeline-open .timeline-scroll { flex: 1; min-height: 0; max-height: none; }
+.timeline-resizer { flex: 0 0 8px; display: flex; align-items: center; justify-content: center; cursor: row-resize; touch-action: none; user-select: none; background: #20252c; }
+.timeline-resizer span { width: 48px; height: 2px; border-radius: 2px; background: #6f7c8e; pointer-events: none; }
+.timeline-resizer:hover, .timeline-resizer:focus-visible { background: #45603a; outline: none; }
+.timeline-resizer:hover span, .timeline-resizer:focus-visible span { background: #c2dfa9; }
 .bulk-text-controls details { border-top: 1px solid #424951; padding: 12px 0; }
 .bulk-text-controls summary { cursor: pointer; font-weight: 600; font-size: 15px; }
 .bulk-text-controls .mixed-value { color: #d3bd8c; font-size: 14px; }
