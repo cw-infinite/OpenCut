@@ -1,3 +1,4 @@
+import { normalizeProjectTags } from '../../shared/projectTags';
 import { TextPresetStore } from '../services/textPresetStore';
 import { app, dialog, ipcMain } from 'electron';
 import { createProject, validSettings } from '../../shared/project';
@@ -12,6 +13,10 @@ import { analyzeSilence } from '../services/silence';
 export function projectHandlers(store: ProjectStore, library: MediaLibrary, trusted: (event: Electron.IpcMainInvokeEvent) => void): void {
   const handle = (channel: string, fn: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => unknown) =>
     ipcMain.handle(channel, (event, ...args) => { trusted(event); return fn(event, ...args); });
+  handle('projects:tags', (_event, id, tags) => {
+    const normalized = normalizeProjectTags(tags);
+    return store.update(id, project => { project.tags = normalized; });
+  });
   const textPresets = new TextPresetStore(store);
   handle('textPresets:remove', (_event, name) => textPresets.merge({}, false, name));
   handle('textPresets:merge', (_event, styles, overwrite) => textPresets.merge(styles, overwrite));
