@@ -13,7 +13,7 @@ The core M0–M10 feature set is implemented. Current work focuses on editing us
 - **Project tags and groups:** assign multiple tags, reuse existing tags, and filter the Projects page by a tag, Untagged, or All projects. Combine grouping with name search in card, simple-list, and detailed-list views. Tags persist with projects and are retained when duplicating them.
 - **Bulk media management:** drag from empty space in the Media library to select items, Ctrl-click to toggle, or Shift-click to select a range. Select visible items, clear selection, delete selected items, or delete the entire library. Delete all includes items hidden by search. Original files are kept; a batch containing media used on the timeline is rejected without deleting any items.
 - **Resizable timeline:** drag the divider above the timeline up to increase its height or down to restore preview space. Double-click to reset. A focused divider also supports the Up/Down arrows and Home/End, with size limits to keep both panels usable.
-- **Updated branding:** the blue-and-white OpenCut emblem is used in setup, the workspace/editor header, favicon, and Windows application icon.
+- **Updated branding:** the cyan, teal, and purple screen-and-scissors OpenCut emblem is used in setup, the workspace/editor header, favicon, and Windows application icon.
 
 These updates are part of the current 0.10.14 checkout; they have not been assigned separate version numbers.
 
