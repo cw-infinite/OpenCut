@@ -41,6 +41,7 @@ const api: OpenCutApi = {
     }
   },
   projects: {
+    tags: (id, tags) => ipcRenderer.invoke('projects:tags', id, tags),
     list: () => ipcRenderer.invoke('projects:list'),
     last: () => ipcRenderer.invoke('projects:last'),
     saveEdit: project => ipcRenderer.invoke('projects:saveEdit', project),

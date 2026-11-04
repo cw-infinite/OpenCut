@@ -40,6 +40,13 @@ input:focus, select:focus { border-color: #a8d880; }
 .fields label { flex: 1; min-width: 0; }
 .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 26px; }
 .media-workspace { display: flex; flex: 1; min-height: calc(100vh - 113px); position: relative; }
+.project-tag-filter { display: flex; align-items: end; flex-wrap: wrap; gap: 16px; margin: 18px 0; }
+.project-tag-filter label { display: grid; gap: 6px; min-width: 230px; }
+.project-tag-filter > span { color: #939ba8; font-size: 13px; padding-bottom: 8px; }
+.project-tags { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+.project-tags > span { background: #293727; color: #c2dfa9; border-radius: 12px; padding: 3px 8px; font-size: 12px; overflow-wrap: anywhere; }
+.project-card .project-tags { padding: 0 14px; }
+.project-tag-suggestions { display: flex; flex-wrap: wrap; gap: 6px; max-height: 150px; overflow: auto; }
 .media-panel { width: 330px; flex-shrink: 0; background: #16171b; border-right: 1px solid #2b2d33; padding: 0 18px 24px; }
 .panel-heading { display: flex; align-items: center; justify-content: space-between; height: 57px; border-bottom: 1px solid #2a2d33; }
 .panel-heading h2 { font-size: 14px; margin: 0; }
