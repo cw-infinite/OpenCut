@@ -1,3 +1,4 @@
+import { TagStore } from '../services/tagStore';
 import { normalizeProjectTags } from '../../shared/projectTags';
 import { TextPresetStore } from '../services/textPresetStore';
 import { app, dialog, ipcMain } from 'electron';
@@ -16,6 +17,12 @@ export function projectHandlers(store: ProjectStore, library: MediaLibrary, trus
   handle('projects:tags', (_event, id, tags) => {
     const normalized = normalizeProjectTags(tags);
     return store.update(id, project => { project.tags = normalized; });
+  });
+  const tagStore = new TagStore(store);
+  handle('tags:list', () => tagStore.list());
+  handle('tags:change', (_event, action, name, replacement) => {
+    if (!['create', 'rename', 'delete'].includes(action)) throw new Error('Invalid tag action');
+    return tagStore.change(action, name, replacement);
   });
   const textPresets = new TextPresetStore(store);
   handle('textPresets:remove', (_event, name) => textPresets.merge({}, false, name));
