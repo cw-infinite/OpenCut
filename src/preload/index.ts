@@ -40,6 +40,7 @@ const api: OpenCutApi = {
       return () => ipcRenderer.removeListener('export:progress', listener);
     }
   },
+  tagCatalog: { list: () => ipcRenderer.invoke('tags:list'), change: (action, name, replacement) => ipcRenderer.invoke('tags:change', action, name, replacement) },
   projects: {
     tags: (id, tags) => ipcRenderer.invoke('projects:tags', id, tags),
     list: () => ipcRenderer.invoke('projects:list'),
