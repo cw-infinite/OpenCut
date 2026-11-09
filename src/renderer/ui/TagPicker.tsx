@@ -1,0 +1,8 @@
+import { useEffect, useState } from 'react';
+export function TagPicker({ value, onChange, disabled }: { value: string[]; onChange(tags: string[]): void; disabled?: boolean }): JSX.Element {
+  const [tags, setTags] = useState<string[]>([]), [name, setName] = useState(''), [error, setError] = useState('');
+  useEffect(() => { void window.opencut.tagCatalog.list().then(setTags).catch(error => setError(String(error))); }, []);
+  return <fieldset disabled={disabled}><legend>Project tags</legend><label>Saved tags<select aria-label="Saved tags" value="" onChange={event => { if (event.target.value && !value.includes(event.target.value)) onChange([...value, event.target.value]); }}><option value="">Choose a tag…</option>{tags.filter(tag => !value.includes(tag)).map(tag => <option key={tag}>{tag}</option>)}</select></label>
+    <div className="project-tag-suggestions">{value.map(tag => <button type="button" className="secondary" key={tag} aria-label={'Remove tag ' + tag} onClick={() => onChange(value.filter(item => item !== tag))}>{tag} ×</button>)}</div>
+    <label>New tag<input aria-label="New tag" maxLength={40} value={name} onChange={event => setName(event.target.value)}/></label><button type="button" className="secondary" disabled={!name.trim()} onClick={async () => { try { setError(''); const updated = await window.opencut.tagCatalog.change('create', name); setTags(updated); const tag = updated.find(tag => tag.toLowerCase() === name.trim().replace(/\s+/g, ' ').toLowerCase())!; if (!value.includes(tag)) onChange([...value, tag]); setName(''); } catch (error) { setError(String(error)); } }}>Create and add tag</button>{error && <p role="alert">{error}</p>}</fieldset>;
+}
