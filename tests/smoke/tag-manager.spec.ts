@@ -1,0 +1,39 @@
+import { test, expect, _electron as electron } from '@playwright/test';
+import { resolve } from 'node:path';
+import { randomUUID } from 'node:crypto';
+test('create tags with project metadata and manage saved tags', async () => {
+ const app = await electron.launch({ args: ['.'], env: { ...process.env, OPENCUT_TEST_DATA: resolve('.test-data/tag-manager-' + randomUUID()) } });
+ try {
+  const page = await app.firstWindow();
+  await page.getByRole('button', { name: 'Open projects', exact: true }).click();
+  await page.getByRole('button', { name: 'New project', exact: true }).click();
+  await page.getByLabel('Project name', { exact: true }).fill('Tagged creation');
+  await page.getByLabel('New tag', { exact: true }).fill('Travel');
+  await page.getByRole('button', { name: 'Create and add tag', exact: true }).click();
+  await expect(page.getByLabel('Remove tag Travel')).toBeVisible();
+  await page.getByRole('button', { name: 'Create project', exact: true }).click();
+  await page.getByRole('button', { name: 'Project settings', exact: true }).click();
+  await expect(page.getByLabel('Remove tag Travel')).toBeVisible();
+  await page.getByLabel('New tag', { exact: true }).fill('Draft');
+  await page.getByRole('button', { name: 'Create and add tag', exact: true }).click();
+  await expect(page.getByLabel('Remove tag Draft')).toBeVisible();
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await page.getByRole('button', { name: 'Manage tags', exact: true }).click();
+  await page.getByRole('button', { name: 'Rename Travel', exact: true }).click();
+  await page.getByLabel('Tag name').fill('Trips');
+  await page.getByRole('button', { name: 'Save tag name', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Rename Trips', exact: true })).toBeVisible();
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Delete Draft', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Delete Draft', exact: true })).toHaveCount(0);
+  const saved = await page.evaluate(async () => (await window.opencut.projects.list()).find(project => project.name === 'Tagged creation')!.tags);
+  expect(saved).toEqual(['Trips']);
+  await page.getByLabel('Tag name').fill('Unused');
+  await page.getByRole('button', { name: 'Create tag', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Rename Unused', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
+  await page.getByRole('button', { name: 'New project', exact: true }).click();
+  await page.getByLabel('Saved tags').selectOption('Unused');
+  await expect(page.getByLabel('Remove tag Unused')).toBeVisible();
+ } finally { await app.close(); }
+});

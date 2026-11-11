@@ -1,6 +1,7 @@
 export type Us = number;
 
 export interface Project {
+  tags?: string[];
   masterVolume?: number;
   id: string; name: string; version: 1;
   settings: { width: number; height: number; fps: number; sampleRate: 48000 };

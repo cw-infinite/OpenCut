@@ -1,4 +1,5 @@
 import type { Project } from './types';
+import { normalizeProjectTags } from './projectTags';
 export const frameRates = [24, 25, 30, 50, 60] as const;
 export function validSettings(value: Project['settings']): void {
   if (!value || !Number.isInteger(value.width) || !Number.isInteger(value.height) ||
@@ -20,5 +21,6 @@ export function parseProject(value: unknown, id: string): Project {
     throw new Error('Invalid or unsupported OpenCut project');
   }
   validSettings(project.settings);
+  if (project.tags !== undefined) project.tags = normalizeProjectTags(project.tags);
   return project;
 }

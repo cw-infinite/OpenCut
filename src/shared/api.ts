@@ -1,7 +1,7 @@
 import type { Project, MediaAsset, SavedTextPreset } from './types';
 import type { ExportRequest, ExportProgress, ExportWork } from './export';
 import type { CaptionRequest, CaptionWord, CaptionProgress } from './captions';
-export interface ProjectSummary { id: string; name: string; updatedAt: string; mediaCount: number; duration: number; settings: Project['settings']; cover?: string }
+export interface ProjectSummary { tags?: string[]; id: string; name: string; updatedAt: string; mediaCount: number; duration: number; settings: Project['settings']; cover?: string }
 export interface MediaView { asset: MediaAsset; url: string; thumbnail?: string; peaks: number[]; missing?: boolean }
 export interface ImportProgress { projectId: string; name: string; stage: string; percent: number; error?: string }
 export interface ToolCheck {
@@ -45,11 +45,13 @@ export interface OpenCutApi {
     finish(): Promise<void>;
     workerError(message: string): Promise<void>;
   };
+  tagCatalog: { list(): Promise<string[]>; change(action: 'create' | 'rename' | 'delete', name: string, replacement?: string): Promise<string[]> };
   projects: {
     list(): Promise<ProjectSummary[]>;
     create(name: string, settings: Project['settings']): Promise<Project>;
     open(id: string): Promise<{ project: Project; recovered: boolean }>;
     rename(id: string, name: string): Promise<Project>;
+    tags(id: string, tags: string[]): Promise<Project>;
     settings(id: string, settings: Project['settings']): Promise<Project>;
     duplicate(id: string): Promise<Project>;
     remove(id: string): Promise<void>;

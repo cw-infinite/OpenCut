@@ -28,7 +28,7 @@ test('project views, metadata, search, duplicate and open', async () => {
     await expect(page.locator('.project-duration')).toHaveText('00:00:03.500');
     await page.getByLabel('Search projects').fill('not found');
     await expect(page.getByRole('heading', { name: 'No matching projects' })).toBeVisible();
-    await page.getByRole('button', { name: 'Clear search', exact: true }).click();
+    await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
     await expect(page.locator('.project-table tbody tr')).toHaveCount(2);
     await page.getByRole('button', { name: 'Duplicate Summer Trip', exact: true }).click();
     await expect(page.locator('.project-table tbody tr')).toHaveCount(3);
