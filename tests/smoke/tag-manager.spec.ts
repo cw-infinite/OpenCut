@@ -19,6 +19,12 @@ test('create tags with project metadata and manage saved tags', async () => {
   await expect(page.getByLabel('Remove tag Draft')).toBeVisible();
   await page.getByRole('button', { name: 'Save changes', exact: true }).click();
   await page.getByRole('button', { name: 'Manage tags', exact: true }).click();
+  const createTag = page.getByRole('button', { name: 'Create tag', exact: true });
+  await expect(createTag).toBeEnabled();
+  await expect(createTag).toHaveCSS('cursor', 'pointer');
+  await createTag.click();
+  await expect(page.getByRole('alert')).toHaveText('Enter a name for your tag.');
+  await expect(page.getByLabel('Tag name', { exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Rename Travel', exact: true }).click();
   await page.getByLabel('Tag name').fill('Trips');
   await page.getByRole('button', { name: 'Save tag name', exact: true }).click();
@@ -31,6 +37,14 @@ test('create tags with project metadata and manage saved tags', async () => {
   await page.getByLabel('Tag name').fill('Unused');
   await page.getByRole('button', { name: 'Create tag', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Rename Unused', exact: true })).toBeVisible();
+  await page.getByLabel('Search tags', { exact: true }).fill('trips');
+  await expect(page.locator('.tag-card')).toHaveCount(1);
+  await expect(page.locator('.tag-card')).toContainText('1 project');
+  await page.getByLabel('Search tags', { exact: true }).fill('not a saved tag');
+  await expect(page.getByRole('heading', { name: 'No tags found', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Clear search', exact: true }).click();
+  await expect(page.locator('.tag-card')).toHaveCount(2);
+  await page.screenshot({ path: 'test-results/tag-manager.png', fullPage: true });
   await page.getByRole('button', { name: 'Back to projects', exact: true }).click();
   await page.getByRole('button', { name: 'New project', exact: true }).click();
   await page.getByLabel('Saved tags').selectOption('Unused');
