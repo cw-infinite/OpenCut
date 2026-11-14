@@ -15,6 +15,10 @@
 .editor-top { display: flex; height: 440px; min-height: 360px; }
 .editor-library { width: 235px; padding: 0 14px 14px; border-right: 1px solid #2d3138; overflow-y: auto; flex-shrink: 0; }
 .editor-library .media-grid { gap: 9px; }
+.editor-library.file-drop-active { outline: 2px dashed #b9dc9e; outline-offset: -4px; background: #273323; }
+.editor-import-help { color: #98a68e; font-size: 13px; margin: 8px 0; }
+.editor-import-progress { font-size: 12px; overflow-wrap: anywhere; margin: 8px 0; }
+.editor-import-progress progress { display: block; width: 100%; margin-top: 5px; }
 .editor-library .media-thumb { height: 60px; }
 .editor-asset small { display: flex; justify-content: space-between; }
 .preview-panel { flex: 1; min-width: 0; padding: 0 18px; display: flex; flex-direction: column; }

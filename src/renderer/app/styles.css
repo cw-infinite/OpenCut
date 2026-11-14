@@ -4,7 +4,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; }
 button { font: inherit; cursor: pointer; }
-button:disabled { opacity: .55; cursor: wait; }
+button:disabled { opacity: .55; cursor: not-allowed; }
 button:focus-visible { outline: 2px solid #befb77; outline-offset: 4px; }
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar { width: 230px; padding: 30px 18px 24px; border-right: 1px solid #27282c; background: #151618; display: flex; flex-direction: column; flex-shrink: 0; }
