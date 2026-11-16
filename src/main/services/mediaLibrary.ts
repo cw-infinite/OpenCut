@@ -128,7 +128,8 @@ export class MediaLibrary {
       const files = asset.thumbDir ? await readdir(asset.thumbDir).catch(() => []) : [];
       const first = files.sort()[0];
       const peaks = asset.peaksPath ? parseWaveformCache(await readFile(asset.peaksPath, 'utf8').catch(() => '[]')) : [];
-      return { asset, url: this.url(asset.proxyPath ?? asset.path), peaks, missing: !(await stat(asset.path).catch(() => null))?.isFile(),
+      const info = await stat(asset.path).catch(() => null);
+      return { asset, createdAt: info?.birthtimeMs || undefined, url: this.url(asset.proxyPath ?? asset.path), peaks, missing: !info?.isFile(),
         thumbnail: first && asset.thumbDir ? this.url(join(asset.thumbDir, first)) : undefined };
     }));
   }
