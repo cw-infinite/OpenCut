@@ -67,7 +67,7 @@
 .ruler { position: relative; height: 32px; background: #14171d; cursor: crosshair; }
 .ruler > span { position: absolute; font-size: 14px; color: #6e7b8d; height: 25px; border-left: 1px solid #3d4652; padding-left: 5px; padding-top: 7px; }
 .timeline-marker { position: absolute; color: #e6c37b; bottom: -4px; font-size: 15px; transform: translateX(-50%); }
-.track-lane { position: relative; background: #151921; }
+.track-lane { isolation: isolate; position: relative; background: #151921; }
 .track-lane.locked { background: repeating-linear-gradient(45deg,#171c24,#171c24 5px,#1e232b 5px,#1e232b 6px); }
 .timeline-clip { position: absolute; top: 6px; height: 58px; border: 1px solid #5d7191; border-radius: 5px; background: #374b68; overflow: hidden; user-select: none; cursor: grab; }
 .timeline-clip.audio { background: #284e43; border-color: #50836d; }
@@ -188,7 +188,7 @@
 .timeline-open > .editor-header, .timeline-open > .workspace-footer { flex-shrink: 0; }
 .timeline-open .editing-workspace { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .timeline-open .editor-subbar { flex-shrink: 0; }
-.timeline-open .editor-top { flex: 0 0 auto; height: clamp(240px, calc(100dvh - 520px), 850px); min-height: 240px; max-height: calc(100% - 230px); }
+.timeline-open .editor-top { flex: 0 0 auto; height: clamp(240px, calc(100dvh - 475px), 850px); min-height: 240px; max-height: calc(100% - 230px); }
 .timeline-open .timeline { flex: 1; min-height: 180px; display: flex; flex-direction: column; }
 .timeline-open .timeline-toolbar { flex-shrink: 0; }
 .timeline-open .timeline-scroll { flex: 1; min-height: 0; max-height: none; }
@@ -258,7 +258,7 @@
 .playhead span { pointer-events: auto; cursor: ew-resize; touch-action: none; width: 18px; height: 28px; margin-left: -9px; }
 .playhead span:focus-visible { background: #ffffff; }
 
-.preview-layout-button { border: 1px solid #b5e88c; background: #d1f3a8; color: #14200c; border-radius: 7px; padding: 9px 14px; font-weight: 700; cursor: pointer; }
+.preview-layout-button { border: 1px solid #b5e88c; background: #d1f3a8; color: #14200c; border-radius: 7px; padding: 6px 14px; font-weight: 700; cursor: pointer; }
 .preview-layout-button:hover { background: #e6ffd0; }
 .designed-text-presets button { min-height: 64px; border: 1px solid #65794e; border-radius: 7px; background: #283122; padding: 10px; }
 
@@ -269,3 +269,7 @@
 .text-preset-card small { color:#bce79f; font-size:12px; }
 .text-preset-card span { color:#9aa7b9; font-size:12px; line-height:1.5; }
 .text-preset-card:hover,.text-preset-card:focus-visible { border-color:#c5eca6; outline:1px solid #c5eca6; }
+
+.zoom-menu { position: relative; }
+.zoom-menu summary { cursor: pointer; white-space: nowrap; }
+.zoom-menu .preview-zoom { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); z-index: 12; width: 215px; padding: 8px; background: #20252c; border: 1px solid #47515e; border-radius: 6px; }
