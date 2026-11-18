@@ -51,7 +51,7 @@ h2 { font-size: 17px; margin: 0 0 6px; font-weight: 600; letter-spacing: -.15px;
 .tool-state { font-size: 14px; color: #858992; margin-left: auto; padding-left: 10px; }
 .card-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #1e1f23; border-top: 1px solid #2b2d32; padding: 17px 24px; }
 .card-footer > div { display: flex; align-items: center; gap: 8px; color: #868a93; font-size: 14px; }
-.primary, .secondary { border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; padding: 11px 14px; border: 1px solid transparent; font-weight: 600; }
+.primary, .secondary { border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; padding: 8px 14px; border: 1px solid transparent; font-weight: 600; }
 .primary { color: #1c2914; background: #b9ef85; }
 .primary:hover { background: #c8ff94; }
 .secondary { color: #c8cbd1; background: #2b2d32; border-color: #3d4047; }
